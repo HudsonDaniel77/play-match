@@ -137,6 +137,99 @@ export const configSchema = z
       .default(100),
     SPORTS_SEED_FILE: z.string().min(1).default('./src/data/sports-seed.json'),
     DEFAULT_TIMEZONE: z.string().min(1).default('UTC'),
+
+    // Module 3: Rating Engine Configs
+    RATING_SCALE_DIVISOR: numberStringSchema
+      .pipe(z.number().positive())
+      .default(400),
+    RATING_K_TIERS: z
+      .union([
+        z.array(
+          z.object({
+            upToGames: z.number().int().positive().nullable().optional(),
+            k: z.number().positive(),
+          }),
+        ),
+        z.string(),
+      ])
+      .default(
+        '[{"upToGames":10,"k":40},{"upToGames":30,"k":32},{"upToGames":null,"k":24}]',
+      )
+      .transform((val, ctx) => {
+        let parsed: unknown;
+        if (typeof val === 'string') {
+          try {
+            parsed = JSON.parse(val);
+          } catch {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'RATING_K_TIERS must be valid JSON',
+            });
+            return z.NEVER;
+          }
+        } else {
+          parsed = val;
+        }
+
+        const tierSchema = z.array(
+          z.object({
+            upToGames: z.number().int().positive().nullable().optional(),
+            k: z.number().positive(),
+          }),
+        );
+
+        const res = tierSchema.safeParse(parsed);
+        if (!res.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'RATING_K_TIERS must be an array of tiers with positive k',
+          });
+          return z.NEVER;
+        }
+        return res.data;
+      }),
+    MOV_ENABLED: booleanStringSchema.default(true),
+    MOV_WEIGHT: numberStringSchema
+      .pipe(z.number().min(0).max(5))
+      .default(0.5),
+    RATING_MIN: numberStringSchema
+      .pipe(z.number().min(0))
+      .default(100),
+    RATING_MAX: numberStringSchema
+      .pipe(z.number().min(500))
+      .default(3000),
+    RATING_DECIMALS: numberStringSchema
+      .pipe(z.number().int().min(0).max(4))
+      .default(1),
+    TEAM_RATING_AGGREGATION: z.enum(['mean']).default('mean'),
+    INACTIVITY_DAYS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(30),
+    INACTIVITY_K_MULTIPLIER: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(1.5),
+    CONFIDENCE_GAMES_THRESHOLD: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(30),
+    CONFIDENCE_RECENCY_HALF_LIFE_DAYS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(60),
+    LEADERBOARD_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    LEADERBOARD_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    LEADERBOARD_EXCLUDE_PROVISIONAL: booleanStringSchema.default(true),
+    HISTORY_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    HISTORY_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    MAX_PLAYERS_PER_SIDE_FALLBACK: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(11),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_TRANSPORT === 'smtp') {
@@ -154,6 +247,50 @@ export const configSchema = z
         path: ['MIN_TRAVEL_RADIUS_KM'],
         message: 'MIN_TRAVEL_RADIUS_KM must not exceed MAX_TRAVEL_RADIUS_KM',
       });
+    }
+    if (data.RATING_MIN >= data.RATING_MAX) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['RATING_MIN'],
+        message: 'RATING_MIN must be strictly less than RATING_MAX',
+      });
+    }
+    if (Array.isArray(data.RATING_K_TIERS) && data.RATING_K_TIERS.length > 0) {
+      const tiers = data.RATING_K_TIERS;
+      // Last tier must be open-ended (upToGames == null)
+      const lastTier = tiers[tiers.length - 1];
+      if (lastTier && lastTier.upToGames != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['RATING_K_TIERS'],
+          message: 'The final K-tier must be open-ended (upToGames must be null or omitted)',
+        });
+      }
+      // Check that preceding tiers have upToGames and are strictly ascending
+      for (let i = 0; i < tiers.length - 1; i++) {
+        const current = tiers[i];
+        const next = tiers[i + 1];
+        if (current && current.upToGames == null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['RATING_K_TIERS'],
+            message: `K-tier at index ${i} must define upToGames before the final tier`,
+          });
+        }
+        if (
+          current &&
+          next &&
+          next.upToGames != null &&
+          current.upToGames != null &&
+          current.upToGames >= next.upToGames
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['RATING_K_TIERS'],
+            message: 'RATING_K_TIERS must be strictly sorted by upToGames in ascending order',
+          });
+        }
+      }
     }
   });
 

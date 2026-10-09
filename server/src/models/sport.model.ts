@@ -25,6 +25,7 @@ export interface ISport {
   isTeamBased: boolean;
   minPlayers: number;
   maxPlayers: number;
+  allowsDraws?: boolean;
   skillBands: ISkillBand[];
   playStyles: IPlayStyle[];
   positions: IPosition[];
@@ -83,6 +84,10 @@ const sportSchema = new Schema<ISportDocument>(
       index: true,
     },
     isTeamBased: {
+      type: Boolean,
+      default: false,
+    },
+    allowsDraws: {
       type: Boolean,
       default: false,
     },

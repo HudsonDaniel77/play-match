@@ -6,3 +6,6 @@ export * from './sport.service.js';
 export * from './sport-profile.service.js';
 export * from './profile.service.js';
 export * from './onboarding.service.js';
+export * from './rating-engine.service.js';
+export * from './rating-history.service.js';
+export * from './leaderboard.service.js';

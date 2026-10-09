@@ -1,14 +1,22 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { beforeAll, afterAll, afterEach } from 'vitest';
+import '../src/models/index.js';
 
-let mongoServer: MongoMemoryServer;
+let mongoReplSet: MongoMemoryReplSet;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
+  mongoReplSet = await MongoMemoryReplSet.create({
+    replSet: { count: 1, storageEngine: 'wiredTiger' },
+  });
+  const uri = mongoReplSet.getUri();
   await mongoose.connect(uri);
-}, 60000);
+
+  // Pre-create all model collections to support multi-document transactions seamlessly
+  for (const model of Object.values(mongoose.models)) {
+    await model.createCollection();
+  }
+}, 120000);
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;
@@ -22,7 +30,7 @@ afterAll(async () => {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
-  if (mongoServer) {
-    await mongoServer.stop();
+  if (mongoReplSet) {
+    await mongoReplSet.stop();
   }
 });

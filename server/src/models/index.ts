@@ -5,3 +5,5 @@ export * from './sport.model.js';
 export * from './profile.model.js';
 export * from './sport-profile.model.js';
 export * from './rating.model.js';
+export * from './match-result.model.js';
+export * from './rating-event.model.js';
