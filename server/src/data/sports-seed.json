@@ -1,0 +1,202 @@
+[
+  {
+    "key": "badminton",
+    "name": "Badminton",
+    "isActive": true,
+    "isTeamBased": false,
+    "minPlayers": 2,
+    "maxPlayers": 4,
+    "skillBands": [
+      {
+        "key": "beginner",
+        "label": "Beginner (Learning Rules & Rallies)",
+        "order": 1,
+        "seedRating": 1000
+      },
+      {
+        "key": "intermediate",
+        "label": "Intermediate (Consistent Clears & Drops)",
+        "order": 2,
+        "seedRating": 1200
+      },
+      {
+        "key": "advanced",
+        "label": "Advanced (Tournament / Fast Smashes)",
+        "order": 3,
+        "seedRating": 1400
+      },
+      {
+        "key": "expert",
+        "label": "Expert (National / Elite Tier)",
+        "order": 4,
+        "seedRating": 1600
+      }
+    ],
+    "playStyles": [
+      { "key": "casual", "label": "Casual / Friendly Rally" },
+      { "key": "competitive", "label": "Competitive / Match Play" },
+      { "key": "fitness", "label": "High-Intensity Fitness Drills" }
+    ],
+    "positions": [
+      { "key": "singles", "label": "Singles Specialist" },
+      { "key": "doubles_front", "label": "Doubles Front Court (Net Control)" },
+      { "key": "doubles_back", "label": "Doubles Back Court (Hard Smashing)" }
+    ]
+  },
+  {
+    "key": "football",
+    "name": "Football",
+    "isActive": true,
+    "isTeamBased": true,
+    "minPlayers": 10,
+    "maxPlayers": 22,
+    "skillBands": [
+      {
+        "key": "beginner",
+        "label": "Beginner (Recreational Kickabout)",
+        "order": 1,
+        "seedRating": 1000
+      },
+      {
+        "key": "intermediate",
+        "label": "Intermediate (Regular 5s / 11s League)",
+        "order": 2,
+        "seedRating": 1200
+      },
+      {
+        "key": "advanced",
+        "label": "Advanced (Semi-Pro / Academy Trained)",
+        "order": 3,
+        "seedRating": 1400
+      }
+    ],
+    "playStyles": [
+      { "key": "tiki_taka", "label": "Possession & Short Passing" },
+      { "key": "counter_attack", "label": "Pace & Direct Counter" },
+      { "key": "casual_five_a_side", "label": "Casual 5-a-Side" }
+    ],
+    "positions": [
+      { "key": "forward", "label": "Forward / Striker" },
+      { "key": "midfielder", "label": "Midfielder (Box-to-Box / Winger)" },
+      { "key": "defender", "label": "Defender (Center / Full Back)" },
+      { "key": "goalkeeper", "label": "Goalkeeper" }
+    ]
+  },
+  {
+    "key": "basketball",
+    "name": "Basketball",
+    "isActive": true,
+    "isTeamBased": true,
+    "minPlayers": 6,
+    "maxPlayers": 10,
+    "skillBands": [
+      {
+        "key": "beginner",
+        "label": "Beginner (Shooting Hoops & Streetball)",
+        "order": 1,
+        "seedRating": 1000
+      },
+      {
+        "key": "intermediate",
+        "label": "Intermediate (Solid Fundamentals & Spacing)",
+        "order": 2,
+        "seedRating": 1200
+      },
+      {
+        "key": "advanced",
+        "label": "Advanced (College / League Level)",
+        "order": 3,
+        "seedRating": 1400
+      }
+    ],
+    "playStyles": [
+      { "key": "pickup_half_court", "label": "Half Court 3v3 / Pickup" },
+      { "key": "full_court_fast_break", "label": "Fast Break 5v5" },
+      { "key": "shooting_clinic", "label": "Shooting Drills & Scrimmage" }
+    ],
+    "positions": [
+      { "key": "point_guard", "label": "Point Guard (Floor General)" },
+      { "key": "shooting_guard", "label": "Shooting Guard" },
+      { "key": "small_forward", "label": "Small Forward" },
+      { "key": "power_forward", "label": "Power Forward" },
+      { "key": "center", "label": "Center (Paint Anchor)" }
+    ]
+  },
+  {
+    "key": "cricket",
+    "name": "Cricket",
+    "isActive": true,
+    "isTeamBased": true,
+    "minPlayers": 12,
+    "maxPlayers": 22,
+    "skillBands": [
+      {
+        "key": "beginner",
+        "label": "Beginner (Gully / Backyard Cricket)",
+        "order": 1,
+        "seedRating": 1000
+      },
+      {
+        "key": "intermediate",
+        "label": "Intermediate (Weekend League / Leather Ball)",
+        "order": 2,
+        "seedRating": 1200
+      },
+      {
+        "key": "advanced",
+        "label": "Advanced (District / First-Class Aspirant)",
+        "order": 3,
+        "seedRating": 1400
+      }
+    ],
+    "playStyles": [
+      { "key": "tennis_ball", "label": "Tape / Heavy Tennis Ball" },
+      { "key": "leather_ball_t20", "label": "Leather Ball T20 / Limited Overs" },
+      { "key": "box_cricket", "label": "Indoor Turf / Box Cricket" }
+    ],
+    "positions": [
+      { "key": "top_order_batter", "label": "Top-Order Batter" },
+      { "key": "all_rounder", "label": "All-Rounder (Bat & Ball)" },
+      { "key": "wicketkeeper", "label": "Wicketkeeper Batter" },
+      { "key": "fast_bowler", "label": "Pace / Seam Bowler" },
+      { "key": "spin_bowler", "label": "Spin Specialist" }
+    ]
+  },
+  {
+    "key": "table_tennis",
+    "name": "Table Tennis",
+    "isActive": true,
+    "isTeamBased": false,
+    "minPlayers": 2,
+    "maxPlayers": 4,
+    "skillBands": [
+      {
+        "key": "beginner",
+        "label": "Beginner (Ping Pong & Social Play)",
+        "order": 1,
+        "seedRating": 1000
+      },
+      {
+        "key": "intermediate",
+        "label": "Intermediate (Topspin Rallies & Spin Serves)",
+        "order": 2,
+        "seedRating": 1200
+      },
+      {
+        "key": "advanced",
+        "label": "Advanced (Club Rated / Aggressive Loopers)",
+        "order": 3,
+        "seedRating": 1400
+      }
+    ],
+    "playStyles": [
+      { "key": "offensive_looper", "label": "Offensive Looper (Heavy Topspin)" },
+      { "key": "defensive_chopper", "label": "Defensive Chopper / Blocker" },
+      { "key": "all_round", "label": "All-Round Controlled Placement" }
+    ],
+    "positions": [
+      { "key": "singles", "label": "Singles Player" },
+      { "key": "doubles", "label": "Doubles Specialist" }
+    ]
+  }
+]
