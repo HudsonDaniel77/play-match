@@ -6,6 +6,8 @@ export const Collections = {
   PROFILES: 'profiles',
   SPORT_PROFILES: 'sport_profiles',
   RATINGS: 'ratings',
+  MATCH_RESULTS: 'match_results',
+  RATING_EVENTS: 'rating_events',
 } as const;
 
 export type CollectionName = (typeof Collections)[keyof typeof Collections];

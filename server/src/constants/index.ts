@@ -9,3 +9,7 @@ export * from './messages.js';
 export * from './onboarding-steps.js';
 export * from './visibility.js';
 export * from './days-of-week.js';
+export * from './match-outcomes.js';
+export * from './match-sources.js';
+export * from './match-status.js';
+export * from './explanation-codes.js';

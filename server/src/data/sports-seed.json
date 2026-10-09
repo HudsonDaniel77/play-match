@@ -4,6 +4,7 @@
     "name": "Badminton",
     "isActive": true,
     "isTeamBased": false,
+    "allowsDraws": false,
     "minPlayers": 2,
     "maxPlayers": 4,
     "skillBands": [
@@ -48,6 +49,7 @@
     "name": "Football",
     "isActive": true,
     "isTeamBased": true,
+    "allowsDraws": true,
     "minPlayers": 10,
     "maxPlayers": 22,
     "skillBands": [
@@ -87,6 +89,7 @@
     "name": "Basketball",
     "isActive": true,
     "isTeamBased": true,
+    "allowsDraws": false,
     "minPlayers": 6,
     "maxPlayers": 10,
     "skillBands": [
@@ -127,6 +130,7 @@
     "name": "Cricket",
     "isActive": true,
     "isTeamBased": true,
+    "allowsDraws": true,
     "minPlayers": 12,
     "maxPlayers": 22,
     "skillBands": [
@@ -167,6 +171,7 @@
     "name": "Table Tennis",
     "isActive": true,
     "isTeamBased": false,
+    "allowsDraws": false,
     "minPlayers": 2,
     "maxPlayers": 4,
     "skillBands": [

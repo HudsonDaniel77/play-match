@@ -11,6 +11,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "seed:sports": "tsx src/scripts/seed-sports.ts",
+    "migrate:ratings": "tsx src/scripts/migrate-ratings.ts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""

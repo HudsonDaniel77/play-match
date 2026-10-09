@@ -55,4 +55,21 @@ export const Messages = {
   INVALID_AVAILABILITY: 'Availability slots are invalid, overlap, or do not meet minimum duration requirements',
   INVALID_LOCATION: 'Location coordinates or travel radius are invalid',
   INVALID_TIMEZONE: 'Invalid IANA timezone identifier provided',
+
+  // Module 3 Rating Engine
+  MATCH_RESULT_APPLIED_SUCCESS: 'Match result applied successfully',
+  MATCH_RESULT_VOIDED_SUCCESS: 'Match result voided successfully',
+  MATCH_RESULT_NOT_FOUND: 'Match result not found',
+  MATCH_RESULT_ALREADY_VOIDED: 'Match result is already voided',
+  CANNOT_VOID_HISTORIC_RESULT: 'Cannot void match result because one or more participants have subsequent rated matches',
+  DRAW_NOT_ALLOWED: 'Draws are not permitted for this sport',
+  DUPLICATE_PLAYER_IN_MATCH: 'A player cannot appear multiple times or on opposing sides in the same match',
+  INVALID_MATCH_SIDES: 'Match must contain exactly two opposing sides with valid player counts',
+  PLAYER_RATING_NOT_FOUND: 'One or more players do not possess an active rating track for this sport',
+  RATING_EVENT_NOT_FOUND: 'Rating event not found',
+  PREVIEW_CALCULATED_SUCCESS: 'Match preview calculations generated successfully',
+  LEADERBOARD_FETCHED_SUCCESS: 'Leaderboard retrieved successfully',
+  RATINGS_FETCHED_SUCCESS: 'Ratings retrieved successfully',
+  HISTORY_FETCHED_SUCCESS: 'Rating history retrieved successfully',
+  EXPLANATION_FETCHED_SUCCESS: 'Rating explanation retrieved successfully',
 } as const;

@@ -32,6 +32,7 @@ export async function seedSportsCatalog(
         name: item.name.trim(),
         isActive: item.isActive !== undefined ? item.isActive : true,
         isTeamBased: item.isTeamBased !== undefined ? item.isTeamBased : false,
+        allowsDraws: item.allowsDraws !== undefined ? item.allowsDraws : false,
         minPlayers: item.minPlayers,
         maxPlayers: item.maxPlayers,
         skillBands: item.skillBands || [],

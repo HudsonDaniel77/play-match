@@ -4,8 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 60000,
-    hookTimeout: 60000,
+    testTimeout: 120000,
+    hookTimeout: 120000,
     fileParallelism: false, // Ensures MongoMemoryServer runs without thread socket collisions
     setupFiles: ['./tests/setup.ts'],
     coverage: {
