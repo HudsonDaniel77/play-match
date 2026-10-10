@@ -7,3 +7,6 @@ export * from './sport-profile.model.js';
 export * from './rating.model.js';
 export * from './match-result.model.js';
 export * from './rating-event.model.js';
+export * from './game.model.js';
+export * from './game-participant.model.js';
+export * from './game-event.model.js';

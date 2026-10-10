@@ -6,6 +6,7 @@ Implemented Modules:
 - **Module 1: Authentication & Identity**
 - **Module 2: Player Profile & Onboarding**
 - **Module 3: Rating Engine (Elo, Ledger & Leaderboards)**
+- **Module 4: Games & Scheduling**
 
 ---
 
@@ -708,6 +709,119 @@ curl -X GET http://localhost:3000/api/v1/ratings/me/badminton/events/<EVENT_ID>/
 ```bash
 curl -X GET "http://localhost:3000/api/v1/leaderboards/badminton?limit=20" \
   -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>"
+```
+
+---
+
+## Module 4: Games & Scheduling Architecture
+
+### 1. State Machine & Lifecycle Transitions
+
+Games follow a strict state machine validated in `src/services/game-transition.service.ts`:
+
+| From Status | Allowed Next Statuses | Trigger / Actor |
+|---|---|---|
+| `open` | `full`, `confirmed`, `cancelled`, `expired` | Host, Player joins, or Sweep |
+| `full` | `open`, `confirmed`, `cancelled`, `expired` | Participant leaves, Host, or Sweep |
+| `confirmed` | `open`, `in_progress`, `cancelled` | Player leaves (invalidates roster), Sweep, Host |
+| `in_progress`| `completed`, `cancelled` | Sweep (grace period elapsed), Admin |
+| `completed` | *(terminal)* | — |
+| `cancelled` | *(terminal)* | Host, Admin, or Sweep |
+| `expired` | *(terminal)* | Sweep (cutoff reached without valid roster) |
+
+### 2. Race-Safe Atomic Seat Claims & Waitlist
+- **Direct Joining**: Uses atomic query `{ _id: gameId, status: { $in: ['open', 'full'] }, participantCount: { $lt: maxPlayers } }` with `$inc: { participantCount: 1 }`. If capacity is reached, status switches to `full` in the same transaction.
+- **Waitlist**: If full, participant joins waitlist atomically up to `WAITLIST_MAX_SIZE`. Oldest waitlisted participant is automatically promoted via FIFO order when a joined participant leaves or is removed.
+- **Schedule Conflict Detection**: Uses denormalized interval `startsAt`/`endsAt` stored on active `joined` participations to prevent overlapping bookings across games.
+
+### 3. Location Privacy & Future Venue Reconciliation
+- **Location Coarsening**: Non-host, non-joined viewers receive coarsened geographic coordinates rounded to `LOCATION_PUBLIC_PRECISION_DECIMALS` (default 2 decimals ~1.1km).
+- **Exact Details Protection**: `courtName` and `addressName` are stripped from responses for users who have not yet joined.
+- **Venue Model Evolution Note**: `courtName` and `addressName` are free-text fields in Module 4. When Module 5 introduces the formal Venue catalog, these fields will be reconciled with structured venue and court entities so the game does not maintain competing representations of location.
+
+---
+
+### Module 4 Endpoints Reference
+
+#### Create a Game
+```bash
+POST /api/v1/games
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "sportKey": "badminton",
+  "formatKey": "singles",
+  "startsAt": "2026-06-01T14:00:00.000Z",
+  "endsAt": "2026-06-01T15:00:00.000Z",
+  "location": {
+    "type": "Point",
+    "coordinates": [77.5946, 12.9716],
+    "addressName": "Kanteerava Stadium"
+  },
+  "courtName": "Court 1",
+  "joinPolicy": "open",
+  "visibility": "public"
+}
+```
+
+#### Lookup Game by Invite Code (Preview with Coarsened Location)
+```bash
+GET /api/v1/games/code/:code
+# Location is coarsened, addressName and courtName are omitted until joined
+```
+
+#### Join a Game / Request Approval
+```bash
+POST /api/v1/games/:id/join
+Authorization: Bearer <TOKEN>
+# Claims open seat atomically; enqueues to waitlist if full; or requests host approval if joinPolicy is approval
+```
+
+#### Leave a Game
+```bash
+POST /api/v1/games/:id/leave
+Authorization: Bearer <TOKEN>
+# Marks leave as on_time (>60m before startsAt) or late (<60m). Triggers automatic FIFO promotion from waitlist.
+# Note: Host cannot leave their own game.
+```
+
+#### Host Participant Management
+- **Approve Request**: `POST /api/v1/games/:id/participants/:userId/approve`
+- **Decline Request**: `POST /api/v1/games/:id/participants/:userId/decline`
+- **Remove Joined Participant**: `DELETE /api/v1/games/:id/participants/:userId` (with optional `{ reason }` body)
+
+#### Cancel a Game
+```bash
+POST /api/v1/games/:id/cancel
+Authorization: Bearer <HOST_OR_ADMIN_TOKEN>
+Content-Type: application/json
+
+{
+  "reasonCode": "host_cancelled",
+  "reasonText": "Rain forecast"
+}
+```
+
+#### View Roster
+```bash
+GET /api/v1/games/:id/roster
+Authorization: Bearer <TOKEN>
+# Returns joined, requested (host only), and waitlisted players with their current ratings
+```
+
+#### View Audit Timeline & Events
+```bash
+GET /api/v1/games/:id/events
+# (Also available at GET /api/v1/games/:id/timeline)
+Authorization: Bearer <TOKEN>
+# Returns append-only event stream (exactly one event per lifecycle action)
+```
+
+#### View My Games (Filtered & Paginated)
+```bash
+GET /api/v1/games/me?page=1&limit=20&status=open&role=host
+Authorization: Bearer <TOKEN>
 ```
 
 ---

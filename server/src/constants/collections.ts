@@ -8,6 +8,9 @@ export const Collections = {
   RATINGS: 'ratings',
   MATCH_RESULTS: 'match_results',
   RATING_EVENTS: 'rating_events',
+  GAMES: 'games',
+  GAME_PARTICIPANTS: 'game_participants',
+  GAME_EVENTS: 'game_events',
 } as const;
 
 export type CollectionName = (typeof Collections)[keyof typeof Collections];

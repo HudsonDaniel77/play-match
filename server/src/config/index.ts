@@ -230,6 +230,64 @@ export const configSchema = z
     MAX_PLAYERS_PER_SIDE_FALLBACK: numberStringSchema
       .pipe(z.number().int().positive())
       .default(11),
+
+    // Module 4: Games & Scheduling Configs
+    GAME_CREATION_LEAD_TIME_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(30),
+    GAME_MAX_ADVANCE_DAYS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(14),
+    GAME_MIN_DURATION_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(15))
+      .default(30),
+    GAME_MAX_DURATION_MINUTES: numberStringSchema
+      .pipe(z.number().int().max(1440))
+      .default(240),
+    JOIN_CUTOFF_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    LEAVE_CUTOFF_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(60),
+    WAITLIST_AUTO_EXPIRE_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    JOIN_REQUEST_AUTO_EXPIRE_HOURS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(24),
+    AUTO_CONFIRM_AT_CUTOFF: booleanStringSchema.default(true),
+    AUTO_IN_PROGRESS_GRACE_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(5),
+    AUTO_COMPLETE_DELAY_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(30),
+    LIFECYCLE_SWEEP_INTERVAL_MS: numberStringSchema
+      .pipe(z.number().int().min(5000))
+      .default(60000),
+    WAITLIST_MAX_SIZE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    RATING_ALLOW_UNRATED_DEFAULT: booleanStringSchema.default(true),
+    DEFAULT_RATING_WINDOW: numberStringSchema
+      .pipe(z.number().min(50))
+      .default(200),
+    MAX_RATING_WINDOW: numberStringSchema
+      .pipe(z.number().min(100))
+      .default(1000),
+    CANCEL_REASON_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(10))
+      .default(500),
+    GAMES_LIST_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    GAMES_LIST_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    INVITE_CODE_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(6).max(12))
+      .default(8),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_TRANSPORT === 'smtp') {
@@ -357,6 +415,28 @@ const defaultTestEnv = {
   MAX_AGE: '100',
   SPORTS_SEED_FILE: './src/data/sports-seed.json',
   DEFAULT_TIMEZONE: 'UTC',
+
+  // Module 4 Test Defaults
+  GAME_CREATION_LEAD_TIME_MINUTES: '30',
+  GAME_MAX_ADVANCE_DAYS: '14',
+  GAME_MIN_DURATION_MINUTES: '30',
+  GAME_MAX_DURATION_MINUTES: '240',
+  JOIN_CUTOFF_MINUTES_BEFORE_START: '15',
+  LEAVE_CUTOFF_MINUTES_BEFORE_START: '60',
+  WAITLIST_AUTO_EXPIRE_MINUTES_BEFORE_START: '15',
+  JOIN_REQUEST_AUTO_EXPIRE_HOURS: '24',
+  AUTO_CONFIRM_AT_CUTOFF: 'true',
+  AUTO_IN_PROGRESS_GRACE_MINUTES: '5',
+  AUTO_COMPLETE_DELAY_MINUTES: '30',
+  LIFECYCLE_SWEEP_INTERVAL_MS: '60000',
+  WAITLIST_MAX_SIZE: '10',
+  RATING_ALLOW_UNRATED_DEFAULT: 'true',
+  DEFAULT_RATING_WINDOW: '200',
+  MAX_RATING_WINDOW: '1000',
+  CANCEL_REASON_MAX_LENGTH: '500',
+  GAMES_LIST_PAGE_SIZE_DEFAULT: '20',
+  GAMES_LIST_PAGE_SIZE_MAX: '100',
+  INVITE_CODE_LENGTH: '8',
 };
 
 const rawSourceEnv =
