@@ -11,19 +11,58 @@ import { createTestUser } from './fixtures/user.fixture.js';
 import { createTestSport } from './fixtures/sport.fixture.js';
 
 describe('Sport Catalog & Admin Management', () => {
-  it('seeding sports catalog from JSON file is idempotent', async () => {
+  it('seeding sports catalog from JSON file is idempotent and seeds exactly 3 sports', async () => {
     // First run
     const run1 = await seedSportsCatalog();
-    expect(run1.seededCount).toBeGreaterThanOrEqual(4);
+    expect(run1.seededCount).toBe(3);
 
     const countAfterRun1 = await Sport.countDocuments();
+    expect(countAfterRun1).toBe(3);
 
     // Second run
     const run2 = await seedSportsCatalog();
-    expect(run2.seededCount).toBe(run1.seededCount);
+    expect(run2.seededCount).toBe(3);
 
     const countAfterRun2 = await Sport.countDocuments();
     expect(countAfterRun2).toBe(countAfterRun1);
+  });
+
+  it('seedSportsCatalog supports dry-run mode without modifying the database', async () => {
+    // Clear sports collection
+    await Sport.deleteMany({});
+
+    const dryRunRes = await seedSportsCatalog({ dryRun: true });
+    expect(dryRunRes.dryRun).toBe(true);
+    expect(dryRunRes.seededCount).toBe(3);
+
+    // Database still has 0 documents
+    const count = await Sport.countDocuments();
+    expect(count).toBe(0);
+  });
+
+  it('seedSportsCatalog supports --deactivate-missing to soft-disable absent sports', async () => {
+    // Pre-insert an old legacy sport (e.g. basketball)
+    await Sport.create({
+      key: 'basketball_legacy',
+      name: 'Basketball Legacy',
+      isActive: true,
+      minPlayers: 6,
+      maxPlayers: 10,
+      skillBands: [{ key: 'b1', label: 'B1', order: 1, seedRating: 1000 }],
+      playStyles: [{ key: 'casual', label: 'Casual' }],
+    });
+
+    // Run without deactivateMissing -> basketball remains active
+    await seedSportsCatalog({ deactivateMissing: false });
+    const legacyStillActive = await Sport.findOne({ key: 'basketball_legacy' });
+    expect(legacyStillActive?.isActive).toBe(true);
+
+    // Run with deactivateMissing -> basketball becomes isActive: false
+    const result = await seedSportsCatalog({ deactivateMissing: true });
+    expect(result.deactivatedCount).toBe(1);
+
+    const legacyDeactivated = await Sport.findOne({ key: 'basketball_legacy' });
+    expect(legacyDeactivated?.isActive).toBe(false);
   });
 
   it('GET /api/v1/sports returns active sports with bands and play styles without authentication', async () => {
@@ -104,5 +143,53 @@ describe('Sport Catalog & Admin Management', () => {
     const publicRes = await request(app).get('/api/v1/sports');
     const publicKeys = publicRes.body.data.sports.map((s: { key: string }) => s.key);
     expect(publicKeys).not.toContain('pickleball');
+  });
+
+  it('validates formats: enforces exactly one default format and capacity bounds', async () => {
+    const { user: admin } = await createTestUser({ role: Roles.ADMIN });
+    const adminToken = tokenService.generateAccessToken({
+      userId: admin.id,
+      role: admin.role,
+      email: admin.email,
+    });
+
+    // Zero default formats -> rejected
+    const noDefaultRes = await request(app)
+      .post('/api/v1/admin/sports')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        key: 'squash_test',
+        name: 'Squash Test',
+        minPlayers: 2,
+        maxPlayers: 4,
+        formats: [
+          { key: 'singles', label: 'Singles', playersPerSide: 1, isDefault: false },
+        ],
+        skillBands: [{ key: 'b1', label: 'B1', order: 1, seedRating: 1000 }],
+        playStyles: [{ key: 'casual', label: 'Casual' }],
+      });
+
+    expect(noDefaultRes.status).toBe(HttpStatus.BAD_REQUEST);
+    expect(noDefaultRes.body.error.details[0].message).toContain('Exactly one format must be marked as default');
+
+    // Two default formats -> rejected
+    const twoDefaultsRes = await request(app)
+      .post('/api/v1/admin/sports')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        key: 'squash_test2',
+        name: 'Squash Test 2',
+        minPlayers: 2,
+        maxPlayers: 4,
+        formats: [
+          { key: 'singles', label: 'Singles', playersPerSide: 1, isDefault: true },
+          { key: 'doubles', label: 'Doubles', playersPerSide: 2, isDefault: true },
+        ],
+        skillBands: [{ key: 'b1', label: 'B1', order: 1, seedRating: 1000 }],
+        playStyles: [{ key: 'casual', label: 'Casual' }],
+      });
+
+    expect(twoDefaultsRes.status).toBe(HttpStatus.BAD_REQUEST);
+    expect(twoDefaultsRes.body.error.details[0].message).toContain('Exactly one format must be marked as default');
   });
 });

@@ -12,6 +12,11 @@ export interface RatingEngineConfig {
   confidenceRecencyHalfLifeDays: number;
 }
 
+export interface SportScoringConfig {
+  scoringType?: 'sets' | 'runs' | 'goals' | string;
+  movWeight?: number;
+}
+
 export interface SkillBandDefinition {
   key: string;
   label: string;

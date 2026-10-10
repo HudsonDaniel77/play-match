@@ -3,6 +3,7 @@ import type {
   MatchSideInput,
   PlayerDeltaCalculation,
   SkillBandDefinition,
+  SportScoringConfig,
 } from './interfaces.js';
 import { calculateExpectedScore, calculatePlayerDelta, clampAndRoundRating } from './elo.js';
 import { getTeamAggregator } from './team-aggregator.js';
@@ -26,6 +27,7 @@ export function calculateMatchRatings(
   skillBands: SkillBandDefinition[],
   aggregationStrategy = 'mean',
   currentDate: Date = new Date(),
+  sportScoring?: SportScoringConfig,
 ): PlayerDeltaCalculation[] {
   const aggregator = getTeamAggregator(aggregationStrategy);
 
@@ -43,12 +45,14 @@ export function calculateMatchRatings(
     outcomeScoreB = 1.0;
   }
 
-  // Margin of victory multiplier
+  // Margin of victory multiplier using sport-level override when provided
+  const effectiveMovWeight = sportScoring?.movWeight !== undefined ? sportScoring.movWeight : config.movWeight;
   const movMultiplier = calculateMarginMultiplier(
     sideA.score,
     sideB.score,
     config.movEnabled,
-    config.movWeight,
+    effectiveMovWeight,
+    sportScoring?.scoringType,
   );
 
   const results: PlayerDeltaCalculation[] = [];

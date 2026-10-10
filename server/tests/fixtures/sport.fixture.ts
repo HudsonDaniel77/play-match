@@ -16,6 +16,15 @@ export async function createTestSport(overrides: {
     isActive: overrides.isActive !== undefined ? overrides.isActive : true,
     minPlayers: overrides.minPlayers || 2,
     maxPlayers: overrides.maxPlayers || 4,
+    formats: [
+      { key: 'singles', label: 'Singles', playersPerSide: 1, isDefault: true },
+      { key: 'doubles', label: 'Doubles', playersPerSide: 2, isDefault: false },
+    ],
+    scoring: {
+      type: 'goals',
+      allowsDraws: false,
+    },
+    movWeight: 0.5,
     skillBands: [
       { key: 'beginner', label: 'Beginner', order: 1, seedRating: 1000 },
       { key: 'intermediate', label: 'Intermediate', order: 2, seedRating: 1200 },
