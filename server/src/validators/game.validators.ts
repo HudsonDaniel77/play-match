@@ -33,7 +33,9 @@ export const createGameSchema = z.object({
             },
           ),
         addressName: z.string().max(200).optional(),
-      }),
+      }).optional(),
+      venueId: z.string().trim().optional(),
+      courtId: z.string().trim().optional(),
       courtName: z.string().max(100).optional(),
       joinPolicy: z
         .enum([JoinPolicies.OPEN, JoinPolicies.APPROVAL])
@@ -57,6 +59,15 @@ export const createGameSchema = z.object({
     .refine((data) => data.endsAt > data.startsAt, {
       message: 'endsAt must be after startsAt',
       path: ['endsAt'],
+    })
+    .superRefine((data, ctx) => {
+      if (!data.location && !data.venueId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Either location or venueId must be provided',
+          path: ['location'],
+        });
+      }
     }),
 });
 
@@ -87,6 +98,8 @@ export const updateGameSchema = z.object({
         })
         .optional(),
       courtName: z.string().max(100).optional(),
+      venueId: z.string().trim().optional(),
+      courtId: z.string().trim().optional(),
       joinPolicy: z.enum([JoinPolicies.OPEN, JoinPolicies.APPROVAL]).optional(),
       visibility: z
         .enum([GameVisibilities.PUBLIC, GameVisibilities.PRIVATE])

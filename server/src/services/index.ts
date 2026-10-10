@@ -15,3 +15,8 @@ export * from './game.service.js';
 export * from './game-participant.service.js';
 export * from './roster.service.js';
 export * from './game-sweep.service.js';
+export * from './venue.service.js';
+export * from './court-reservation.service.js';
+export * from './discovery.service.js';
+export * from './venue-discovery.service.js';
+export * from './venue-suggestion.service.js';

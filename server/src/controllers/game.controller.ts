@@ -4,6 +4,8 @@ import { GameService } from '../services/game.service.js';
 import { GameParticipantService } from '../services/game-participant.service.js';
 import { getGameRoster } from '../services/roster.service.js';
 import { checkEligibility } from '../services/game-eligibility.service.js';
+import { DiscoveryService } from '../services/discovery.service.js';
+import { VenueSuggestionService } from '../services/venue-suggestion.service.js';
 import { Game } from '../models/game.model.js';
 import { GameParticipant } from '../models/game-participant.model.js';
 import { GameEvent } from '../models/game-event.model.js';
@@ -15,6 +17,7 @@ import { ErrorCodes } from '../constants/error-codes.js';
 import { ParticipantRoles, ParticipantStatuses } from '../constants/game-constants.js';
 import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
+import { defaultClock } from '../utils/clock.js';
 
 export async function createGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -208,6 +211,27 @@ export async function getMyGames(req: Request, res: Response, next: NextFunction
       },
       Messages.GAMES.FETCH_SUCCESS,
     );
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function discoverGames(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user!.id;
+    const result = await DiscoveryService.discoverGames(userId, req.query as any, defaultClock);
+    sendSuccess(res, result, Messages.VENUES.GAMES_DISCOVERY_SUCCESS);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getVenueSuggestions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user!.id;
+    const gameId = new Types.ObjectId(req.params.id);
+    const suggestions = await VenueSuggestionService.getVenueSuggestions(gameId, userId, defaultClock);
+    sendSuccess(res, suggestions, Messages.VENUES.SUGGESTIONS_SUCCESS);
   } catch (err) {
     next(err);
   }

@@ -7,6 +7,7 @@ Implemented Modules:
 - **Module 2: Player Profile & Onboarding**
 - **Module 3: Rating Engine (Elo, Ledger & Leaderboards)**
 - **Module 4: Games & Scheduling**
+- **Module 5: Geo Discovery & Venues**
 
 ---
 
@@ -931,3 +932,33 @@ server/
 ├── vitest.config.ts
 └── README.md
 ```
+
+---
+
+## Module 5: Geo Discovery & Venues Architecture
+
+Module 5 adds real venue management, race-safe court reservation locking, location-aware game & venue discovery, and privacy-preserving venue suggestions:
+
+### 1. Venue Catalog & Lifecycle
+- **Statuses**: `pending_approval` → `active` (via admin approval) → `suspended` / `archived`.
+- **Courts & Operating Hours**: Each venue defines weekly operating hours slots and courts supporting specific sports from the catalog.
+- **Safety checks on modifications**: Changes to operating hours, closures, or court deactivations reject if upcoming active games would be impacted, unless an admin override is provided.
+- **Dynamic Status**: Games linked to venues compute `venueStatus` at read time from the referenced venue document.
+
+### 2. Concurrency-Safe Court Reservations
+- Race-safe isolation prevents two games from reserving the same court at overlapping times (incorporating configured buffer intervals).
+- Guard locking uses atomic updates on pre-created `CourtGuard` documents per court.
+- Dual-guard acquisitions (such as when changing venues or courts) enforce deterministic sorted order to prevent deadlocks.
+
+### 3. Location Privacy & Game Discovery (`GET /api/v1/games/discover`)
+- Free-form game exact coordinates are kept confidential (only visible to host and joined roster players).
+- Free-form game distances in discovery are coarsened to `DISTANCE_PRIVACY_ROUNDING_KM` (`1.0 km`) to avoid triangulation attacks.
+- Keyset cursor pagination uses displayed (rounded) distance or start time, ensuring exact coordinates are never exposed via cursor tokens.
+- Calculates transparent match signals: `distanceKm`, `ratingGap`, `ratingInRange`, `availabilityFit`, `travelRadiusFit`, `seatsLeft`.
+
+### 4. Venue Suggestions (`GET /api/v1/games/:id/venue-suggestions`)
+- Available to the game host when roster meets `MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION` (excluding the host).
+- Computes geographic centroid of eligible participants (excluding players with `visibility.location === 'hidden'`).
+- The centroid is computed server-side and never returned in API responses to prevent privacy leaks.
+- Suggestions are ranked transparently by average travel distance and maximum travel distance.
+

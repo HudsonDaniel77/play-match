@@ -126,4 +126,24 @@ export const Messages = {
     REQUEST_DECLINED: 'Join request declined',
     PARTICIPANT_REMOVED: 'Participant removed from game',
   },
+
+  // Module 5 Venues & Discovery
+  VENUES: {
+    CREATED_SUCCESS: 'Venue created successfully',
+    FETCH_SUCCESS: 'Venue retrieved successfully',
+    UPDATED_SUCCESS: 'Venue updated successfully',
+    APPROVED_SUCCESS: 'Venue approved successfully',
+    SUSPENDED_SUCCESS: 'Venue suspended successfully',
+    REINSTATED_SUCCESS: 'Venue reinstated successfully',
+    ARCHIVED_SUCCESS: 'Venue archived successfully',
+    COURT_ADDED_SUCCESS: 'Court added to venue successfully',
+    COURT_UPDATED_SUCCESS: 'Court updated successfully',
+    HOURS_UPDATED_SUCCESS: 'Operating hours updated successfully',
+    CLOSURE_ADDED_SUCCESS: 'Closure scheduled successfully',
+    CLOSURE_REMOVED_SUCCESS: 'Closure removed successfully',
+    AVAILABILITY_FETCHED_SUCCESS: 'Venue court availability retrieved successfully',
+    DISCOVERY_SUCCESS: 'Venues discovered successfully',
+    GAMES_DISCOVERY_SUCCESS: 'Games discovered successfully',
+    SUGGESTIONS_SUCCESS: 'Venue suggestions calculated successfully',
+  },
 } as const;

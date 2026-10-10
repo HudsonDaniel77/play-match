@@ -6,6 +6,7 @@ import { profileRoutes, publicProfileRoutes } from './profile.routes.js';
 import { ratingRoutes, adminRatingRoutes } from './rating.routes.js';
 import { leaderboardRoutes } from './leaderboard.routes.js';
 import { gameRoutes } from './game.routes.js';
+import { venueRoutes } from './venue.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { Roles } from '../constants/roles.js';
@@ -22,6 +23,7 @@ router.use('/ratings', authenticate, ratingRoutes);
 router.use('/admin/ratings', authenticate, authorize(Roles.ADMIN), adminRatingRoutes);
 router.use('/leaderboards', authenticate, leaderboardRoutes);
 router.use('/games', gameRoutes);
+router.use('/venues', venueRoutes);
 
 export const appRouter = router;
 

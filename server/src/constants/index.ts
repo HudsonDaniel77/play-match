@@ -15,3 +15,4 @@ export * from './match-status.js';
 export * from './explanation-codes.js';
 export * from './scoring-types.js';
 export * from './game-constants.js';
+export * from './venue-constants.js';

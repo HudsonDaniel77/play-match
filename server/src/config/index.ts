@@ -288,6 +288,61 @@ export const configSchema = z
     INVITE_CODE_LENGTH: numberStringSchema
       .pipe(z.number().int().min(6).max(12))
       .default(8),
+
+    // Module 5: Geo Discovery & Venues
+    DISCOVERY_DEFAULT_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(15),
+    DISCOVERY_MIN_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(0.5))
+      .default(1),
+    DISCOVERY_MAX_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(10))
+      .default(50),
+    DISCOVERY_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    DISCOVERY_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(50),
+    DISCOVERY_MAX_ELIGIBILITY_EXPLAIN_PER_PAGE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    DISTANCE_PRIVACY_ROUNDING_KM: numberStringSchema
+      .pipe(z.number().min(0.1))
+      .default(0.5),
+    VENUE_NAME_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(2))
+      .default(100),
+    VENUE_DESCRIPTION_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(10))
+      .default(1000),
+    MAX_VENUES_PER_OWNER: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    MAX_COURTS_PER_VENUE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(20),
+    VENUE_PHOTOS_MAX: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    VENUE_AMENITIES_MAX: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(20),
+    VENUE_REQUIRE_ADMIN_APPROVAL: booleanStringSchema.default(true),
+    COURT_BUFFER_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    VENUE_SUGGESTION_MAX_RESULTS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(5),
+    VENUE_SUGGESTION_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(30),
+    MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(4),
+    FREEFORM_LOCATION_ALLOWED: booleanStringSchema.default(true),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_TRANSPORT === 'smtp') {
@@ -437,6 +492,27 @@ const defaultTestEnv = {
   GAMES_LIST_PAGE_SIZE_DEFAULT: '20',
   GAMES_LIST_PAGE_SIZE_MAX: '100',
   INVITE_CODE_LENGTH: '8',
+
+  // Module 5 Test Defaults
+  DISCOVERY_DEFAULT_RADIUS_KM: '15',
+  DISCOVERY_MIN_RADIUS_KM: '1',
+  DISCOVERY_MAX_RADIUS_KM: '50',
+  DISCOVERY_PAGE_SIZE_DEFAULT: '20',
+  DISCOVERY_PAGE_SIZE_MAX: '50',
+  DISCOVERY_MAX_ELIGIBILITY_EXPLAIN_PER_PAGE: '10',
+  DISTANCE_PRIVACY_ROUNDING_KM: '0.5',
+  VENUE_NAME_MAX_LENGTH: '100',
+  VENUE_DESCRIPTION_MAX_LENGTH: '1000',
+  MAX_VENUES_PER_OWNER: '10',
+  MAX_COURTS_PER_VENUE: '20',
+  VENUE_PHOTOS_MAX: '10',
+  VENUE_AMENITIES_MAX: '20',
+  VENUE_REQUIRE_ADMIN_APPROVAL: 'true',
+  COURT_BUFFER_MINUTES: '15',
+  VENUE_SUGGESTION_MAX_RESULTS: '5',
+  VENUE_SUGGESTION_RADIUS_KM: '30',
+  MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION: '4',
+  FREEFORM_LOCATION_ALLOWED: 'true',
 };
 
 const rawSourceEnv =

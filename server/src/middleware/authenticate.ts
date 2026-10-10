@@ -52,3 +52,37 @@ export async function authenticate(
     next(error);
   }
 }
+
+export async function optionalAuthenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return next();
+    }
+
+    try {
+      const payload = tokenService.verifyAccessToken(token);
+      const user = await User.findById(payload.userId);
+      if (user && user.status !== UserStatuses.SUSPENDED) {
+        req.user = user;
+        req.tokenPayload = payload;
+      }
+    } catch {
+      // Ignore token decode errors for optional auth
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+

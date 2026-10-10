@@ -27,18 +27,23 @@ import { type Clock, defaultClock } from '../utils/clock.js';
 import { TransactionEventBuffer } from '../utils/domain-events.js';
 import { transitionGame } from './game-transition.service.js';
 import { generateRandomAlphaNumeric } from '../utils/crypto.js';
+import { Venue } from '../models/venue.model.js';
+import { VenueStatuses, VenueEventTypes } from '../constants/venue-constants.js';
+import { CourtReservationService } from './court-reservation.service.js';
 
 export interface CreateGameInput {
   sportKey: string;
   formatKey: string;
   startsAt: Date;
   endsAt: Date;
-  location: {
+  location?: {
     type: 'Point';
     coordinates: [number, number];
     addressName?: string;
   };
   courtName?: string;
+  venueId?: string | Types.ObjectId;
+  courtId?: string;
   joinPolicy?: JoinPolicy;
   visibility?: GameVisibility;
   ratingRange?: {
@@ -59,6 +64,8 @@ export interface UpdateGameInput {
     addressName?: string;
   };
   courtName?: string;
+  venueId?: string | Types.ObjectId;
+  courtId?: string;
   notes?: string;
   joinPolicy?: JoinPolicy;
   visibility?: GameVisibility;
@@ -102,7 +109,21 @@ export class GameService {
       }
     }
 
-    if (!isHost && !isJoined && gameObj.location && gameObj.location.coordinates) {
+    // If game is linked to a venue, compute venueStatus dynamically
+    let isVenueGame = false;
+    if (gameObj.venue) {
+      const vDoc = await Venue.findById(gameObj.venue);
+      if (vDoc) {
+        isVenueGame = vDoc.status === VenueStatuses.ACTIVE;
+        gameObj.venueStatus = vDoc.status;
+        gameObj.venueName = vDoc.name;
+        gameObj.venueAreaLabel = vDoc.areaLabel;
+      }
+    }
+
+    // Exact location is public for approved venue games (Requirement 5)
+    // Free-form games keep exact location private for non-host and non-joined players
+    if (!isVenueGame && !isHost && !isJoined && gameObj.location && gameObj.location.coordinates) {
       const precision = config.LOCATION_PUBLIC_PRECISION_DECIMALS;
       const factor = Math.pow(10, precision);
       gameObj.location = {
@@ -253,6 +274,14 @@ export class GameService {
       inviteCode = generateRandomAlphaNumeric(config.INVITE_CODE_LENGTH).toUpperCase();
     }
 
+    // Check location / venue setup
+    if (!input.venueId && !input.location) {
+      throw new AppError('Either venueId or location must be provided', HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR);
+    }
+    if (!input.venueId && !config.FREEFORM_LOCATION_ALLOWED) {
+      throw new AppError('Free-form locations are not permitted; venue selection is required', HttpStatus.BAD_REQUEST, ErrorCodes.FREEFORM_GAMES_NOT_ALLOWED);
+    }
+
     // Run creation inside transaction
     const session = await mongoose.startSession();
     const eventBuffer = new TransactionEventBuffer();
@@ -260,6 +289,34 @@ export class GameService {
 
     try {
       await session.withTransaction(async () => {
+        let finalLocation = input.location;
+        let finalCourtName = input.courtName;
+        let venueObjectId: Types.ObjectId | undefined;
+        let courtIdStr: string | undefined;
+
+        if (input.venueId && input.courtId) {
+          venueObjectId = typeof input.venueId === 'string' ? new Types.ObjectId(input.venueId) : input.venueId;
+          courtIdStr = input.courtId;
+
+          const { venue: bookedVenue, court: bookedCourt } =
+            await CourtReservationService.verifyAndLockReservation({
+              venueId: venueObjectId,
+              courtId: courtIdStr,
+              sportKey: input.sportKey,
+              startsAt: input.startsAt,
+              endsAt: input.endsAt,
+              session,
+              clock,
+            });
+
+          finalLocation = {
+            type: 'Point',
+            coordinates: bookedVenue.location.coordinates,
+            addressName: `${bookedVenue.name}, ${bookedVenue.areaLabel}`,
+          };
+          finalCourtName = bookedCourt.name;
+        }
+
         const [game] = await Game.create(
           [
             {
@@ -276,8 +333,10 @@ export class GameService {
               waitlistCount: 0,
               startsAt: input.startsAt,
               endsAt: input.endsAt,
-              location: input.location,
-              courtName: input.courtName,
+              location: finalLocation,
+              courtName: finalCourtName,
+              venue: venueObjectId,
+              courtId: courtIdStr,
               ratingRange: input.ratingRange
                 ? {
                     min: input.ratingRange.min,
@@ -538,9 +597,52 @@ export class GameService {
       };
     }
 
+    const venueChanged =
+      (input.venueId !== undefined && input.venueId?.toString() !== game.venue?.toString()) ||
+      (input.courtId !== undefined && input.courtId !== game.courtId);
+
     const session = await mongoose.startSession();
+    const eventBuffer = new TransactionEventBuffer();
     try {
       await session.withTransaction(async () => {
+        // If venue, court, or time changed on a venue game, re-verify and re-lock
+        const targetVenueId = input.venueId !== undefined ? (input.venueId ? new Types.ObjectId(input.venueId) : undefined) : game.venue;
+        const targetCourtId = input.courtId !== undefined ? input.courtId : game.courtId;
+
+        if (targetVenueId && targetCourtId && (timeChanged || venueChanged)) {
+          // Acquire both guards in sorted order if moving courts or venues (Requirement 3)
+          if (game.venue && game.courtId && (game.venue.toString() !== targetVenueId.toString() || game.courtId !== targetCourtId)) {
+            await CourtReservationService.lockMultipleGuards(
+              [
+                { venueId: game.venue, courtId: game.courtId },
+                { venueId: targetVenueId, courtId: targetCourtId },
+              ],
+              session,
+            );
+          }
+
+          const { venue: bookedVenue, court: bookedCourt } =
+            await CourtReservationService.verifyAndLockReservation({
+              venueId: targetVenueId,
+              courtId: targetCourtId,
+              sportKey: game.sportKey,
+              startsAt: game.startsAt,
+              endsAt: game.endsAt,
+              excludeGameId: game._id,
+              session,
+              clock,
+            });
+
+          game.venue = targetVenueId;
+          game.courtId = targetCourtId;
+          game.location = {
+            type: 'Point',
+            coordinates: bookedVenue.location.coordinates,
+            addressName: `${bookedVenue.name}, ${bookedVenue.areaLabel}`,
+          };
+          game.courtName = bookedCourt.name;
+        }
+
         await game.save({ session });
 
         // If time changed, update denormalized startsAt/endsAt in all participants
@@ -550,6 +652,16 @@ export class GameService {
             { $set: { startsAt: game.startsAt, endsAt: game.endsAt } },
             { session },
           );
+        }
+
+        if (venueChanged) {
+          eventBuffer.buffer({
+            type: VenueEventTypes.GAME_VENUE_CHANGED,
+            gameId: game._id.toString(),
+            actorId: actorObjectId.toString(),
+            timestamp: now,
+            data: { venueId: game.venue?.toString(), courtId: game.courtId },
+          });
         }
 
         await GameEvent.create(
@@ -569,6 +681,7 @@ export class GameService {
       await session.endSession();
     }
 
+    eventBuffer.commit();
     return game;
   }
 

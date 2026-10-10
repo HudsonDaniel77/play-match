@@ -11,6 +11,8 @@ export const Collections = {
   GAMES: 'games',
   GAME_PARTICIPANTS: 'game_participants',
   GAME_EVENTS: 'game_events',
+  VENUES: 'venues',
+  COURT_GUARDS: 'court_guards',
 } as const;
 
 export type CollectionName = (typeof Collections)[keyof typeof Collections];

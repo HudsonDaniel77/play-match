@@ -10,8 +10,17 @@ import {
   removeParticipantSchema,
   listGamesQuerySchema,
 } from '../validators/game.validators.js';
+import { discoverGamesQuerySchema } from '../validators/venue.validators.js';
 
 const router = Router();
+
+// 0. Game discovery (must be before /:id routes to avoid route shadowing)
+router.get(
+  '/discover',
+  authenticate,
+  validateRequest(discoverGamesQuerySchema),
+  GameController.discoverGames,
+);
 
 // 1. My Games list (paginated, filtered)
 router.get(
@@ -127,6 +136,14 @@ router.get(
   '/:id/events',
   authenticate,
   GameController.getTimeline,
+);
+
+// 15. Venue suggestions for a game (host only)
+router.get(
+  '/:id/venue-suggestions',
+  authenticate,
+  requireOnboardingComplete,
+  GameController.getVenueSuggestions,
 );
 
 export const gameRoutes = router;

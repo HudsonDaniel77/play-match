@@ -10,3 +10,5 @@ export * from './rating-event.model.js';
 export * from './game.model.js';
 export * from './game-participant.model.js';
 export * from './game-event.model.js';
+export * from './venue.model.js';
+export * from './court-guard.model.js';

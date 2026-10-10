@@ -54,6 +54,8 @@ export interface IGame {
   endsAt: Date;
   location: IGameLocation;
   courtName?: string;
+  venue?: Types.ObjectId;
+  courtId?: string;
   ratingRange?: IRatingRange;
   isLocked: boolean;
   notes?: string;
@@ -220,6 +222,15 @@ export const gameSchema = new Schema<IGameDocument>(
       required: true,
     },
     courtName: {
+      type: String,
+      trim: true,
+    },
+    venue: {
+      type: Schema.Types.ObjectId,
+      ref: Collections.VENUES,
+      index: true,
+    },
+    courtId: {
       type: String,
       trim: true,
     },
