@@ -116,9 +116,21 @@ npm start
 
 ## Sports Catalog Seeding
 
-Sports are managed as catalog data in the `sports` collection, loaded from `SPORTS_SEED_FILE` (default: `./src/data/sports-seed.json`). The seed command is completely idempotent:
+Sports are managed as catalog data in the `sports` collection, loaded from `SPORTS_SEED_FILE` (default: `./src/data/sports-seed.json`). The project is currently scoped to three primary sports: **Badminton**, **Football**, and **Cricket**.
+
+### Seeding Command & Options
 ```bash
+# Standard idempotent upsert of catalog sports
 npm run seed:sports
+
+# Dry-run mode: report planned changes without touching the database
+npm run seed:sports -- --dry-run
+
+# Deactivate missing sports: marks catalog sports absent from the seed file as inactive (never deletes)
+npm run seed:sports -- --deactivate-missing
+
+# Dry-run with deactivation report
+npm run seed:sports -- --dry-run --deactivate-missing
 ```
 
 ### Seed File Format (`sports-seed.json`)
@@ -129,21 +141,28 @@ npm run seed:sports
     "name": "Badminton",
     "isActive": true,
     "isTeamBased": false,
+    "allowsDraws": false,
     "minPlayers": 2,
     "maxPlayers": 4,
+    "formats": [
+      { "key": "singles", "label": "Singles (1v1)", "playersPerSide": 1, "isDefault": true },
+      { "key": "doubles", "label": "Doubles (2v2)", "playersPerSide": 2, "isDefault": false }
+    ],
+    "scoring": {
+      "type": "sets",
+      "allowsDraws": false
+    },
+    "movWeight": 0.4,
     "skillBands": [
       { "key": "beginner", "label": "Beginner", "order": 1, "seedRating": 1000 },
       { "key": "intermediate", "label": "Intermediate", "order": 2, "seedRating": 1200 },
       { "key": "advanced", "label": "Advanced", "order": 3, "seedRating": 1400 }
     ],
     "playStyles": [
-      { "key": "casual", "label": "Casual / Friendly Rally" },
-      { "key": "competitive", "label": "Competitive / Match Play" }
+      { "key": "attacking", "label": "Attacking / Smash-Heavy" },
+      { "key": "defensive", "label": "Defensive / Placement" }
     ],
-    "positions": [
-      { "key": "singles", "label": "Singles Specialist" },
-      { "key": "doubles_front", "label": "Doubles Front Court" }
-    ]
+    "positions": []
   }
 ]
 ```

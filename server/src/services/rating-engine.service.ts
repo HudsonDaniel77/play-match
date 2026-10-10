@@ -232,8 +232,9 @@ export class RatingEngineService {
         outcome = MatchOutcomes.SIDE_B_WIN;
       }
 
-      // Check draw eligibility
-      if (outcome === MatchOutcomes.DRAW && !sport.allowsDraws) {
+      // Check draw eligibility (prefer scoring.allowsDraws, fallback to sport.allowsDraws)
+      const allowsDraws = sport.scoring?.allowsDraws !== undefined ? sport.scoring.allowsDraws : sport.allowsDraws;
+      if (outcome === MatchOutcomes.DRAW && !allowsDraws) {
         throw new ValidationError(
           Messages.DRAW_NOT_ALLOWED,
           ErrorCodes.DRAW_NOT_ALLOWED,
@@ -247,7 +248,7 @@ export class RatingEngineService {
         seedRating: b.seedRating,
       }));
 
-      // Calculate deltas via pure engine
+      // Calculate deltas via pure engine with sport scoring overrides
       const calculations: PlayerDeltaCalculation[] = calculateMatchRatings(
         sideAInput,
         sideBInput,
@@ -266,6 +267,11 @@ export class RatingEngineService {
         },
         skillBands,
         config.TEAM_RATING_AGGREGATION,
+        new Date(),
+        {
+          scoringType: sport.scoring?.type,
+          movWeight: sport.movWeight,
+        },
       );
 
       // Create MatchResult document

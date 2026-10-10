@@ -237,4 +237,57 @@ describe('Pure Rating Engine Mathematical Tests', () => {
       }),
     ).toThrowError(/RATING_K_TIERS must be valid JSON/);
   });
+
+  it('normalizes margin of victory correctly per scoring type (sets, runs, goals)', () => {
+    // 1. Sets scoring (e.g. 2-1 in sets): margin = (2-1)/(2+1) = 1/3 ≈ 0.3333
+    // Multiplier = 1.0 + 0.4 * (1/3) ≈ 1.1333
+    const setsMult = calculateMarginMultiplier(2, 1, true, 0.4, 'sets');
+    expect(setsMult).toBeCloseTo(1 + 0.4 * (1 / 3), 4);
+
+    // Sets scoring sweep (2-0 in sets): margin = (2-0)/2 = 1.0
+    // Multiplier = 1.0 + 0.4 * 1.0 = 1.4
+    const sweepMult = calculateMarginMultiplier(2, 0, true, 0.4, 'sets');
+    expect(sweepMult).toBeCloseTo(1.4, 4);
+
+    // 2. Goals scoring (e.g. 3-1 in football): margin = 2 / 4 = 0.5
+    // Multiplier = 1.0 + 0.5 * 0.5 = 1.25
+    const goalsMult = calculateMarginMultiplier(3, 1, true, 0.5, 'goals');
+    expect(goalsMult).toBeCloseTo(1.25, 4);
+
+    // 3. Runs scoring (e.g. 150 vs 100 in cricket): margin = 50 / 250 = 0.2
+    // Multiplier = 1.0 + 0.3 * 0.2 = 1.06
+    const runsMult = calculateMarginMultiplier(150, 100, true, 0.3, 'runs');
+    expect(runsMult).toBeCloseTo(1.06, 4);
+
+    // 4. Equal score gives neutral multiplier 1.0 regardless of scoring type
+    expect(calculateMarginMultiplier(1, 1, true, 0.5, 'goals')).toBe(1.0);
+    expect(calculateMarginMultiplier(100, 100, true, 0.3, 'runs')).toBe(1.0);
+  });
+
+  it('calculateMatchRatings honors sport-level movWeight and scoringType override', () => {
+    const sideA = {
+      sideKey: 'side_a',
+      score: 2,
+      players: [{ userId: 'p1', rating: 1200, gamesPlayed: 10, lastRatedAt: new Date() }],
+    };
+    const sideB = {
+      sideKey: 'side_b',
+      score: 0,
+      players: [{ userId: 'p2', rating: 1200, gamesPlayed: 10, lastRatedAt: new Date() }],
+    };
+
+    // With sportScoring override for badminton sets (sweep 2-0 -> margin 1.0, movWeight 0.4 -> multiplier 1.4)
+    const results = calculateMatchRatings(
+      sideA,
+      sideB,
+      baseConfig,
+      sampleBands,
+      'mean',
+      new Date(),
+      { scoringType: 'sets', movWeight: 0.4 },
+    );
+
+    const winner = results.find((r) => r.userId === 'p1')!;
+    expect(winner.movMultiplier).toBeCloseTo(1.4, 4);
+  });
 });

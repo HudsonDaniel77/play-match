@@ -1,5 +1,6 @@
 import { Schema, model, type Document, type Model } from 'mongoose';
 import { Collections } from '../constants/collections.js';
+import { ScoringTypes, type ScoringType } from '../constants/scoring-types.js';
 
 export interface ISkillBand {
   key: string;
@@ -18,6 +19,18 @@ export interface IPosition {
   label: string;
 }
 
+export interface ISportFormat {
+  key: string;
+  label: string;
+  playersPerSide: number;
+  isDefault: boolean;
+}
+
+export interface ISportScoring {
+  type: ScoringType;
+  allowsDraws: boolean;
+}
+
 export interface ISport {
   key: string;
   name: string;
@@ -26,6 +39,9 @@ export interface ISport {
   minPlayers: number;
   maxPlayers: number;
   allowsDraws?: boolean;
+  formats: ISportFormat[];
+  scoring: ISportScoring;
+  movWeight?: number;
   skillBands: ISkillBand[];
   playStyles: IPlayStyle[];
   positions: IPosition[];
@@ -63,6 +79,29 @@ const positionSchema = new Schema<IPosition>(
   { _id: false },
 );
 
+const formatSchema = new Schema<ISportFormat>(
+  {
+    key: { type: String, required: true, trim: true },
+    label: { type: String, required: true, trim: true },
+    playersPerSide: { type: Number, required: true, min: 1 },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+const scoringSchema = new Schema<ISportScoring>(
+  {
+    type: {
+      type: String,
+      required: true,
+      enum: Object.values(ScoringTypes),
+      default: ScoringTypes.GOALS,
+    },
+    allowsDraws: { type: Boolean, required: true, default: false },
+  },
+  { _id: false },
+);
+
 const sportSchema = new Schema<ISportDocument>(
   {
     key: {
@@ -90,6 +129,18 @@ const sportSchema = new Schema<ISportDocument>(
     allowsDraws: {
       type: Boolean,
       default: false,
+    },
+    formats: {
+      type: [formatSchema],
+      default: [],
+    },
+    scoring: {
+      type: scoringSchema,
+      required: false,
+    },
+    movWeight: {
+      type: Number,
+      required: false,
     },
     minPlayers: {
       type: Number,
