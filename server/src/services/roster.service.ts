@@ -84,7 +84,7 @@ export async function getGameRoster(
     const member: RosterMember = {
       userId: uIdStr,
       name: prof?.displayName || 'Player',
-      avatarUrl: prof?.avatarUrl,
+      avatarUrl: prof?.avatarUrl ?? undefined,
       role: p.role,
       status: p.status,
       joinedAt: p.joinedAt,

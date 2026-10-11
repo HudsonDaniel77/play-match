@@ -53,7 +53,7 @@ export const gameEventSchema = new Schema<IGameEventDocument>(
     toJSON: {
       transform(_doc, ret) {
         ret.id = ret._id.toString();
-        delete ret._id;
+        delete (ret as any)._id;
         return ret;
       },
     },

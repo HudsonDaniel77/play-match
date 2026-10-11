@@ -13,6 +13,7 @@ export const Collections = {
   GAME_EVENTS: 'game_events',
   VENUES: 'venues',
   COURT_GUARDS: 'court_guards',
+  GAME_TEAM_FORMATIONS: 'game_team_formations',
 } as const;
 
 export type CollectionName = (typeof Collections)[keyof typeof Collections];

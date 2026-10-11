@@ -5,6 +5,7 @@ import { ErrorCodes } from '../constants/error-codes.js';
 import { GameStatuses, JoinPolicies, GameVisibilities, ParticipantRoles, ParticipantStatuses } from '../constants/game-constants.js';
 import { VenueStatuses, DiscoverySortOptions } from '../constants/venue-constants.js';
 import { Roles } from '../constants/roles.js';
+import { TeamSideKeys, TeamBalanceMethods } from '../constants/team-constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +136,70 @@ export function generateOpenAPISpec() {
         UserRolesEnum: {
           type: 'string',
           enum: Object.values(Roles),
+        },
+        TeamSideKeysEnum: {
+          type: 'string',
+          enum: Object.values(TeamSideKeys),
+        },
+        TeamBalanceMethodsEnum: {
+          type: 'string',
+          enum: Object.values(TeamBalanceMethods),
+        },
+        TeamFormationPlayer: {
+          type: 'object',
+          required: ['userId', 'displayName', 'rating'],
+          properties: {
+            userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            displayName: { type: 'string', example: 'Player 1' },
+            rating: { type: 'number', example: 1200 },
+            position: { type: 'string', example: 'forward' },
+          },
+        },
+        TeamFormationTeam: {
+          type: 'object',
+          required: ['sideKey', 'name', 'players', 'ratingTotal', 'ratingAverage'],
+          properties: {
+            sideKey: { $ref: '#/components/schemas/TeamSideKeysEnum' },
+            name: { type: 'string', example: 'Team A' },
+            players: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TeamFormationPlayer' },
+            },
+            ratingTotal: { type: 'number', example: 2400 },
+            ratingAverage: { type: 'number', example: 1200 },
+          },
+        },
+        TeamFormationBalance: {
+          type: 'object',
+          required: ['difference', 'method'],
+          properties: {
+            difference: { type: 'number', example: 0 },
+            method: { $ref: '#/components/schemas/TeamBalanceMethodsEnum' },
+          },
+        },
+        TeamFormationPayload: {
+          type: 'object',
+          required: ['teams', 'balance', 'reasons'],
+          properties: {
+            teams: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TeamFormationTeam' },
+            },
+            balance: { $ref: '#/components/schemas/TeamFormationBalance' },
+            reasons: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+          },
+        },
+        TeamFormationResponse: {
+          type: 'object',
+          required: ['success', 'data'],
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Operation completed successfully' },
+            data: { $ref: '#/components/schemas/TeamFormationPayload' },
+          },
         },
       },
     },
@@ -1011,6 +1076,85 @@ export function generateOpenAPISpec() {
             { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           ],
           responses: { '200': { description: 'Venue suggestions' } },
+        },
+      },
+      '/api/v1/games/{gameId}/teams': {
+        get: {
+          tags: ['Games - Teams'],
+          summary: 'Get saved balanced teams for a game',
+          description: 'Retrieve persisted team formation for a game. Available to participants and the game host.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'gameId',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string',
+                pattern: '^[0-9a-fA-F]{24}$',
+              },
+              description: 'Target game ObjectId (24-character hex)',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Saved team formation retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/TeamFormationResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '403': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
+        },
+      },
+      '/api/v1/games/{gameId}/teams/generate': {
+        post: {
+          tags: ['Games - Teams'],
+          summary: 'Generate and persist balanced teams for a game (host only)',
+          description: 'Generate balanced teams using snake draft balancer and persist snapshot. Host only.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'gameId',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string',
+                pattern: '^[0-9a-fA-F]{24}$',
+              },
+              description: 'Target game ObjectId (24-character hex)',
+            },
+          ],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: false,
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Balanced teams generated and persisted successfully',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/TeamFormationResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '403': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
         },
       },
       '/api/v1/venues': {

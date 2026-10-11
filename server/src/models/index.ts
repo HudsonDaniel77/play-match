@@ -12,3 +12,4 @@ export * from './game-participant.model.js';
 export * from './game-event.model.js';
 export * from './venue.model.js';
 export * from './court-guard.model.js';
+export * from './game-team-formation.model.js';
