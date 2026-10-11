@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "PlayMatch",
+    "slug": "playmatch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "playmatch",
+    "plugins": ["expo-router", "expo-secure-store", "expo-location"],
+    "android": {
+      "package": "com.playmatch.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.playmatch.app"
+    }
+  }
+}

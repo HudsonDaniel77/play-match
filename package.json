@@ -1,0 +1,27 @@
+{
+  "name": "playmatch-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "server:test": "npm --prefix server test",
+    "server:build": "npm --prefix server run build",
+    "server:lint": "npm --prefix server run lint",
+    "server:dev": "npm --prefix server run dev",
+    "server:seed": "npm --prefix server run seed:demo",
+    "gen:api": "npm --prefix packages/shared run gen:api",
+    "check:api": "npm --prefix packages/shared run check:api",
+    "test:shared": "npm --prefix packages/shared test",
+    "test:web": "npm --prefix apps/web test",
+    "test:mobile": "npm --prefix apps/mobile test",
+    "test": "npm --prefix packages/shared test && npm --prefix apps/web test && npm --prefix server test",
+    "lint": "npm run lint --workspaces --if-present && npm --prefix server run lint",
+    "build": "npm run build --workspaces --if-present && npm --prefix server run build"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}

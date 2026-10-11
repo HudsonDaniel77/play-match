@@ -17,26 +17,47 @@ playmatch/
 
 ---
 
+## 📚 Documentation
+
+Detailed engineering and API guides are available in `/docs`:
+- [Getting Started Guide](docs/getting-started.md) - Run everything in under 15 minutes
+- [API Contract & Error Envelope](docs/api-contract.md) - Request envelopes, error codes, and headers
+- [Architecture & Design](docs/architecture.md) - Multi-doc transactions, clock injection, and privacy
+- [Module Walkthrough](docs/module-guide.md) - Modules 1 through 5 overview
+- [OpenAPI Specification](server/openapi.json) - Full OpenAPI 3.0 specification
+
+---
+
 ## 🚀 Quick Start
 
-### Backend (Server)
+### 1. Database (Local Replica Set)
 
-For comprehensive setup, API specs, and configuration guide, refer to the [Server README](server/README.md).
+PlayMatch requires a MongoDB replica set for multi-document transaction support:
 
 ```bash
-# Navigate to the server directory
+# Option A: Using Docker Compose
+docker compose up -d
+
+# Option B: Persistent in-memory replica set (no Docker required)
+cd server && npm run db:memory
+```
+
+### 2. Backend Setup
+
+```bash
 cd server
 
 # Install dependencies
 npm install
 
-# Copy environment variables
-cp .env.example .env
+# Copy environment template
+cp .env.local.example .env
 
-# Run database seeds (Sports catalog)
+# Seed sports catalog & demo accounts/games
 npm run seed:sports
+npm run seed:demo
 
-# Start in development mode
+# Start development server
 npm run dev
 ```
 

@@ -1,0 +1,52 @@
+{
+  "name": "@playmatch/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api/index.ts",
+    "./client": "./src/client/index.ts",
+    "./query": "./src/query/index.ts",
+    "./constants": "./src/constants/index.ts",
+    "./privacy": "./src/privacy/index.ts",
+    "./features/*": "./src/features/*/index.ts"
+  },
+  "scripts": {
+    "gen:api": "openapi-typescript ../../server/openapi.json -o ./src/api/generated.ts && prettier --write ./src/api/generated.ts",
+    "check:api": "tsx src/scripts/check-api-drift.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.62.8",
+    "@types/node": "^22.10.7",
+    "@types/react": "^18.3.18",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "eslint": "^8.57.1",
+    "openapi-typescript": "7.4.3",
+    "prettier": "^3.4.2",
+    "react": "^18.3.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
