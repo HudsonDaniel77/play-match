@@ -60,3 +60,9 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+env:
+      MONGODB_URI: "mongodb://localhost:27017/test_db"
+      CLIENT_WEB_URL: "http://localhost:3000"
+      JWT_ACCESS_SECRET: "dummy_access_secret_for_ci_testing"
+      JWT_REFRESH_SECRET: "dummy_refresh_secret_for_ci_testing"
