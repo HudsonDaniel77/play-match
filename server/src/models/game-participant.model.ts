@@ -83,7 +83,7 @@ export const gameParticipantSchema = new Schema<IGameParticipantDocument>(
     toJSON: {
       transform(_doc, ret) {
         ret.id = ret._id.toString();
-        delete ret._id;
+        delete (ret as any)._id;
         return ret;
       },
     },

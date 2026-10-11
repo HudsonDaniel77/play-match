@@ -11,13 +11,28 @@ const specPath = path.resolve(__dirname, '../../openapi.json');
 export function extractExpressRoutes(expressApp: any): Array<{ method: string; path: string }> {
   const routes: Array<{ method: string; path: string }> = [];
 
-  function cleanPrefix(regexSource: string): string {
-    return regexSource
-      .replace('^\\', '')
-      .replace('^', '')
+  function cleanPrefix(regexSource: string, keys: any[] = []): string {
+    let cleaned = regexSource
+      .replace(/^\^\\?/, '')
+      .replace(/\\\/\?\(\?=\\\/\|\$\)$/, '')
+      .replace(/\/\?\(\?=\/\|\$\)$/, '')
       .replace('\\/?(?=\\/|$)', '')
       .replace(/\\\//g, '/')
-      .replace(/\\\?/g, '?')
+      .replace(/\\\?/g, '?');
+
+    if (keys && keys.length > 0) {
+      let keyIdx = 0;
+      cleaned = cleaned.replace(/\(\?:\/\(\[\^\/\]\+\?\)\)/g, () => {
+        const k = keys[keyIdx++];
+        return k ? `/:${k.name}` : '';
+      });
+      cleaned = cleaned.replace(/\(\[\^\/\]\+\?\)/g, () => {
+        const k = keys[keyIdx++];
+        return k ? `:${k.name}` : '';
+      });
+    }
+
+    return cleaned
       .replace(/\(\?:\([^)]+\)\)\?/g, '')
       .replace(/\?$/, '');
   }
@@ -41,7 +56,7 @@ export function extractExpressRoutes(expressApp: any): Array<{ method: string; p
       } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
         let prefixSegment = '';
         if (layer.regexp) {
-          prefixSegment = cleanPrefix(layer.regexp.source);
+          prefixSegment = cleanPrefix(layer.regexp.source, layer.keys);
           if (prefixSegment && !prefixSegment.startsWith('/')) {
             prefixSegment = '/' + prefixSegment;
           }

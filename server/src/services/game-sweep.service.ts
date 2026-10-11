@@ -165,7 +165,7 @@ export async function runLifecycleSweep(clock: Clock = defaultClock): Promise<Sw
   });
 
   for (const req of staleRequests) {
-    req.status = ParticipantStatuses.EXPIRED;
+    req.status = ParticipantStatuses.REMOVED;
     await req.save();
     summary.staleRequestsExpiredCount++;
 
@@ -194,7 +194,7 @@ export async function runLifecycleSweep(clock: Clock = defaultClock): Promise<Sw
     });
 
     for (const wl of expiredWaitlists) {
-      wl.status = ParticipantStatuses.EXPIRED;
+      wl.status = ParticipantStatuses.REMOVED;
       await wl.save();
       summary.staleWaitlistExpiredCount++;
 

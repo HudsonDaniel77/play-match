@@ -77,6 +77,7 @@ export const GameEventTypes = {
   WAITLIST_EXPIRED: 'waitlist_expired',
   REQUEST_EXPIRED: 'request_expired',
   STATUS_CHANGED: 'status_changed',
+  TEAMS_GENERATED: 'teams_generated',
 } as const;
 
 export type GameEventType = (typeof GameEventTypes)[keyof typeof GameEventTypes];

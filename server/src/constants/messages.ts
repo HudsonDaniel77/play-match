@@ -12,25 +12,25 @@ export const Messages = {
   AUTH_LOGOUT_ALL_SUCCESS: 'All sessions logged out successfully',
   AUTH_REGISTER_SUCCESS: 'User registered successfully',
   AUTH_LOGIN_SUCCESS: 'Logged in successfully',
-  
+
   // Email Verification
   AUTH_EMAIL_VERIFIED_SUCCESS: 'Email verified successfully',
   AUTH_EMAIL_NOT_VERIFIED: 'Email verification is required to perform this action',
   AUTH_RESEND_VERIFICATION_GENERIC: 'If an account with that email exists and is unverified, a verification link has been sent.',
   AUTH_VERIFICATION_TOKEN_INVALID: 'Invalid or expired verification token',
-  
+
   // Password Management
   AUTH_FORGOT_PASSWORD_GENERIC: 'If an account with that email exists, a password reset link has been sent.',
   AUTH_RESET_PASSWORD_SUCCESS: 'Password has been reset successfully',
   AUTH_CHANGE_PASSWORD_SUCCESS: 'Password changed successfully',
   AUTH_RESET_TOKEN_INVALID: 'Invalid or expired password reset token',
   AUTH_CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect',
-  
+
   // User Management & Conflicts
   USER_ALREADY_EXISTS: 'An account with this email address already exists',
   USER_NOT_FOUND: 'User not found',
   FORBIDDEN: 'You do not have permission to perform this action',
-  
+
   // Validation & System
   VALIDATION_ERROR: 'Validation failed',
   NOT_FOUND: 'The requested resource was not found',
@@ -145,5 +145,15 @@ export const Messages = {
     DISCOVERY_SUCCESS: 'Venues discovered successfully',
     GAMES_DISCOVERY_SUCCESS: 'Games discovered successfully',
     SUGGESTIONS_SUCCESS: 'Venue suggestions calculated successfully',
+  },
+
+  // Module 7 Team Formation
+  TEAMS: {
+    GENERATED_SUCCESS: 'Teams generated and saved successfully',
+    FETCH_SUCCESS: 'Teams retrieved successfully',
+    INSUFFICIENT_PLAYERS:
+      'Not enough joined players to form balanced teams (need an even roster at or above the game minimum)',
+    NOT_FOUND: 'Teams have not been generated for this game yet',
+    HOST_ONLY_GENERATE: 'Only the game host can generate teams',
   },
 } as const;

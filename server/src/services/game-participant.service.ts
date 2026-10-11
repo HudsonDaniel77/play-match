@@ -95,7 +95,7 @@ export class GameParticipantService {
 
       if (blockingReasons.length > 0) {
         // Candidate is no longer eligible (e.g. schedule conflict), mark expired and decrement waitlist
-        candidate.status = ParticipantStatuses.EXPIRED;
+        candidate.status = ParticipantStatuses.REMOVED;
         await candidate.save({ session });
         game.waitlistCount = Math.max(0, game.waitlistCount - 1);
         await game.save({ session });
@@ -489,7 +489,7 @@ export class GameParticipantService {
             game.startsAt.getTime() - config.LEAVE_CUTOFF_MINUTES_BEFORE_START * 60 * 1000,
           );
           if (now > leaveCutoff) {
-            leaveType = LeaveTypes.LATE;
+            leaveType = LeaveTypes.LATE as any;
           }
 
           participant.status = ParticipantStatuses.LEFT;
