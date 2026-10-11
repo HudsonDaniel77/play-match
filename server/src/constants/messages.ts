@@ -171,4 +171,21 @@ export const Messages = {
     ALREADY_SUBMITTED: 'A result proposal has already been submitted for this game',
     INVALID_SCORES: 'Invalid scores provided in the result proposal',
   },
+
+  // Module 11 Feedback & Reliability
+  FEEDBACK: {
+    SUBMITTED_SUCCESS: 'Attendance feedback submitted successfully',
+    FETCH_SUCCESS: 'Game feedback retrieved successfully',
+    HOST_ONLY: 'Only the game host can submit attendance feedback',
+    NOT_PARTICIPANT: 'Only game participants can view feedback for this game',
+    GAME_NOT_COMPLETED: 'Feedback can only be submitted after the game is completed',
+    WINDOW_CLOSED: 'The feedback window for this game has closed',
+    ALREADY_SUBMITTED: 'Feedback has already been submitted for this player in this game',
+    INVALID_TARGET: 'Feedback target must be another joined participant of this game',
+  },
+  RELIABILITY: {
+    FETCH_SUCCESS: 'Reliability retrieved successfully',
+    PROFILE_NOT_FOUND: 'Player profile not found',
+    PRIVATE: 'This player has chosen not to share their reliability',
+  },
 } as const;

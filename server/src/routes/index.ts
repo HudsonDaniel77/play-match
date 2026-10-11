@@ -9,6 +9,7 @@ import { gameRoutes } from './game.routes.js';
 import { venueRoutes } from './venue.routes.js';
 import { teamRoutes } from './team.routes.js';
 import { gameResultRoutes } from './game-result.routes.js';
+import { reliabilityRoutes, gameFeedbackRoutes } from './reliability.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { Roles } from '../constants/roles.js';
@@ -25,9 +26,11 @@ router.use('/ratings', authenticate, ratingRoutes);
 router.use('/admin/ratings', authenticate, authorize(Roles.ADMIN), adminRatingRoutes);
 router.use('/leaderboards', authenticate, leaderboardRoutes);
 router.use('/games/:id/results', gameResultRoutes);
+router.use('/games/:id/feedback', gameFeedbackRoutes);
 router.use('/games/:gameId/teams', teamRoutes);
 router.use('/games', gameRoutes);
 router.use('/venues', venueRoutes);
+router.use('/reliability', reliabilityRoutes);
 
 export const appRouter = router;
 
