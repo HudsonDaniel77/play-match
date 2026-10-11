@@ -6,6 +6,7 @@ import { GameStatuses, JoinPolicies, GameVisibilities, ParticipantRoles, Partici
 import { VenueStatuses, DiscoverySortOptions } from '../constants/venue-constants.js';
 import { Roles } from '../constants/roles.js';
 import { TeamSideKeys, TeamBalanceMethods } from '../constants/team-constants.js';
+import { ResultStatuses, RatingStatuses } from '../constants/result-constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -199,6 +200,89 @@ export function generateOpenAPISpec() {
             success: { type: 'boolean', example: true },
             message: { type: 'string', example: 'Operation completed successfully' },
             data: { $ref: '#/components/schemas/TeamFormationPayload' },
+          },
+        },
+        ResultStatusesEnum: {
+          type: 'string',
+          enum: Object.values(ResultStatuses),
+        },
+        RatingStatusesEnum: {
+          type: 'string',
+          enum: Object.values(RatingStatuses),
+        },
+        GameResultScore: {
+          type: 'object',
+          required: ['sideKey', 'score', 'winner'],
+          properties: {
+            sideKey: { type: 'string', example: 'team_a' },
+            score: { type: 'integer', minimum: 0, example: 21 },
+            winner: { type: 'boolean', example: true },
+          },
+        },
+        GameResultProposal: {
+          type: 'object',
+          required: ['proposedByUserId', 'proposedAt', 'scores'],
+          properties: {
+            proposedByUserId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            proposedAt: { type: 'string', format: 'date-time' },
+            scores: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/GameResultScore' },
+            },
+            notes: { type: 'string', example: 'Good game' },
+          },
+        },
+        GameResultPayload: {
+          type: 'object',
+          required: [
+            'id',
+            'gameId',
+            'status',
+            'ratingStatus',
+            'proposal',
+            'whoMustActNext',
+          ],
+          properties: {
+            id: { type: 'string', example: '507f1f77bcf86cd799439012' },
+            gameId: { type: 'string', example: '507f1f77bcf86cd799439013' },
+            status: { $ref: '#/components/schemas/ResultStatusesEnum' },
+            ratingStatus: { $ref: '#/components/schemas/RatingStatusesEnum' },
+            proposal: { $ref: '#/components/schemas/GameResultProposal' },
+            whoMustActNext: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+            verifiedAt: { type: 'string', format: 'date-time' },
+            disputedAt: { type: 'string', format: 'date-time' },
+            disputedByUserId: { type: 'string' },
+            resolvedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        GameResultResponse: {
+          type: 'object',
+          required: ['success', 'data'],
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Operation completed successfully' },
+            data: { $ref: '#/components/schemas/GameResultPayload' },
+          },
+        },
+        SubmitResultRequestBody: {
+          type: 'object',
+          required: ['scores'],
+          properties: {
+            scores: {
+              type: 'array',
+              minItems: 2,
+              items: { $ref: '#/components/schemas/GameResultScore' },
+            },
+            notes: { type: 'string', maxLength: 500 },
+          },
+        },
+        DisputeResultRequestBody: {
+          type: 'object',
+          properties: {
+            reason: { type: 'string', maxLength: 500 },
           },
         },
       },
@@ -1154,6 +1238,154 @@ export function generateOpenAPISpec() {
             '401': { $ref: '#/components/schemas/ApiErrorResponse' },
             '403': { $ref: '#/components/schemas/ApiErrorResponse' },
             '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
+        },
+      },
+      '/api/v1/games/{id}/results': {
+        get: {
+          tags: ['Games - Results'],
+          summary: 'Get match result state for a game',
+          description: 'Fetch the submitted or verified score result state for a game',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', pattern: '^[0-9a-fA-F]{24}$' },
+              description: 'Game ObjectId (24-character hex)',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Match result retrieved',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/GameResultResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
+        },
+        post: {
+          tags: ['Games - Results'],
+          summary: 'Submit a new score proposal for a game',
+          description: 'Joined participant submits match result scores. Game transitions to completed and opposing team is prompted in whoMustActNext.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', pattern: '^[0-9a-fA-F]{24}$' },
+              description: 'Game ObjectId (24-character hex)',
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SubmitResultRequestBody' },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Match result proposal submitted',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/GameResultResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '403': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '409': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
+        },
+      },
+      '/api/v1/games/{id}/results/verify': {
+        post: {
+          tags: ['Games - Results'],
+          summary: 'Confirm and verify proposed score, triggering Elo rating engine',
+          description: 'Opposing player in whoMustActNext verifies proposed match score. Updates result status to verified and applies rating updates.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', pattern: '^[0-9a-fA-F]{24}$' },
+              description: 'Game ObjectId (24-character hex)',
+            },
+          ],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: { type: 'object', additionalProperties: false },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Result verified and ratings applied',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/GameResultResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '403': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '409': { $ref: '#/components/schemas/ApiErrorResponse' },
+          },
+        },
+      },
+      '/api/v1/games/{id}/results/dispute': {
+        post: {
+          tags: ['Games - Results'],
+          summary: 'Dispute proposed match score',
+          description: 'Opposing player in whoMustActNext disputes proposed match score.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', pattern: '^[0-9a-fA-F]{24}$' },
+              description: 'Game ObjectId (24-character hex)',
+            },
+          ],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/DisputeResultRequestBody' },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Result disputed successfully',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/GameResultResponse' },
+                },
+              },
+            },
+            '400': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '401': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '403': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '404': { $ref: '#/components/schemas/ApiErrorResponse' },
+            '409': { $ref: '#/components/schemas/ApiErrorResponse' },
           },
         },
       },

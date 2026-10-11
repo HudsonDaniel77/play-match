@@ -78,6 +78,9 @@ export const GameEventTypes = {
   REQUEST_EXPIRED: 'request_expired',
   STATUS_CHANGED: 'status_changed',
   TEAMS_GENERATED: 'teams_generated',
+  RESULT_SUBMITTED: 'game.result_submitted',
+  RESULT_VERIFIED: 'game.result_verified',
+  RESULT_DISPUTED: 'game.result_disputed',
 } as const;
 
 export type GameEventType = (typeof GameEventTypes)[keyof typeof GameEventTypes];

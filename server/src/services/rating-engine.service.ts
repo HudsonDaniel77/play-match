@@ -613,8 +613,19 @@ export class RatingEngineService {
       );
     }
 
-    const maxAllowed = sport.maxPlayers || config.MAX_PLAYERS_PER_SIDE_FALLBACK;
-    const minAllowed = sport.minPlayers || 1;
+    //const maxAllowed = sport.maxPlayers || config.MAX_PLAYERS_PER_SIDE_FALLBACK;
+    //const minAllowed = sport.minPlayers || 1;
+
+    // sport.minPlayers / maxPlayers are TOTAL players per game, not per side.
+    // Per-side limits come from the sport's formats (playersPerSide).
+    const minAllowed = 1;
+    const formatSideSizes = (sport.formats ?? []).map((f) => f.playersPerSide);
+    const maxAllowed =
+      formatSideSizes.length > 0
+        ? Math.max(...formatSideSizes)
+        : sport.maxPlayers
+          ? Math.max(1, Math.floor(sport.maxPlayers / 2))
+          : config.MAX_PLAYERS_PER_SIDE_FALLBACK;
 
     if (
       sideA.playerIds.length < minAllowed ||
