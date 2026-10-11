@@ -13,3 +13,4 @@ export * from './game-event.model.js';
 export * from './venue.model.js';
 export * from './court-guard.model.js';
 export * from './game-team-formation.model.js';
+export * from './game-result.model.js';

@@ -156,4 +156,19 @@ export const Messages = {
     NOT_FOUND: 'Teams have not been generated for this game yet',
     HOST_ONLY_GENERATE: 'Only the game host can generate teams',
   },
+
+  // Module 8 Result Submission & Verification
+  RESULTS: {
+    SUBMITTED_SUCCESS: 'Match result proposal submitted successfully',
+    FETCH_SUCCESS: 'Match result retrieved successfully',
+    VERIFIED_SUCCESS: 'Match result verified and ratings applied successfully',
+    DISPUTED_SUCCESS: 'Match result disputed successfully',
+    NOT_FOUND: 'No result proposal found for this game',
+    NOT_PARTICIPANT: 'Only active joined participants can submit results',
+    NOT_ALLOWED_TO_VERIFY: 'You are not authorized to verify or dispute this result',
+    SAME_TEAM_VERIFY: 'Opposing team players must verify the result',
+    ALREADY_VERIFIED: 'This result has already been verified',
+    ALREADY_SUBMITTED: 'A result proposal has already been submitted for this game',
+    INVALID_SCORES: 'Invalid scores provided in the result proposal',
+  },
 } as const;

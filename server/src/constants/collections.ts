@@ -14,6 +14,7 @@ export const Collections = {
   VENUES: 'venues',
   COURT_GUARDS: 'court_guards',
   GAME_TEAM_FORMATIONS: 'game_team_formations',
+  GAME_RESULTS: 'game_results',
 } as const;
 
 export type CollectionName = (typeof Collections)[keyof typeof Collections];

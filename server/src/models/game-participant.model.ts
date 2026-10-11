@@ -24,6 +24,7 @@ export interface IGameParticipant {
   removedBy?: Types.ObjectId;
   removeReason?: string;
   userRatingAtJoin?: number;
+  sideKey?: string;
   startsAt: Date; // Denormalized from Game for conflict queries
   endsAt: Date;   // Denormalized from Game for conflict queries
   createdAt: Date;
@@ -74,6 +75,7 @@ export const gameParticipantSchema = new Schema<IGameParticipantDocument>(
     removedBy: { type: Schema.Types.ObjectId, ref: Collections.USERS },
     removeReason: { type: String, trim: true },
     userRatingAtJoin: { type: Number },
+    sideKey: { type: String, trim: true },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
   },
