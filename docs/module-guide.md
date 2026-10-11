@@ -56,6 +56,15 @@ A walkthrough of the 5 implemented modules and their domain interactions.
 
 ---
 
+## Module 11: Feedback & Reliability
+- **Path**: `src/routes/reliability.routes.ts`, `src/services/reliability.service.ts`, `src/engine/reliability/`
+- **Features**:
+  - Host-recorded attendance feedback (`attended` / `no_show`) after a game is completed, within `FEEDBACK_WINDOW_HOURS` of the game end.
+  - Per-player reliability (score 0-100, tier, on-time/late leaves, no-shows) derived from `game_participants` and `game_feedback`, so it is idempotent and cannot double count; `player_reliability` is a cached snapshot.
+  - Privacy: other players' reliability follows the profile's `profile` and `ratings` visibility settings.
+
+---
+
 ## 🛠️ How to Add Module 6+ Checklist
 
 When adding subsequent modules (e.g., Module 6: Matchmaking & Recommendations, Module 7: Chat & Notifications, etc.), follow this standardized checklist to maintain system integrity, test coverage, and documentation consistency:

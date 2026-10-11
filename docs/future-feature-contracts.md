@@ -57,6 +57,10 @@ Every future feature is architected with a 3-part seam in `packages/shared/src/f
 - **Hook**: `useFeatureReliability(client, userId)`
 - **Schema & Types**:
   - `reliability`: `{ score (0-100), tier ('bronze'|'silver'|'gold'|'platinum'), gamesCounted, onTimeLeaves, lateLeaves, noShows }`.
+- **Live endpoints (Module 11)**:
+  - `GET /api/v1/reliability/me` and `GET /api/v1/reliability/:userId` return `data: { userId, reliability: { score, tier, gamesCounted, onTimeLeaves, lateLeaves, noShows } }`. Another player's reliability returns `403 PROFILE_PRIVATE` when their profile is private or their ratings are hidden.
+  - `POST /api/v1/games/:id/feedback` (host only) body `{ targetUserId, attendance: 'attended' | 'no_show', note? }`; `GET /api/v1/games/:id/feedback` returns `data: { feedback: [...] }` (host sees all, other participants only feedback about themselves).
+  - Score = `round(100 * (earned credit + prior games) / (games counted + prior games))`. Attended = 1 credit; on-time leave, late leave and no-show credits and the tier cutoffs are configurable (`RELIABILITY_*`). Players with fewer than `RELIABILITY_MIN_GAMES_FOR_TOP_TIERS` counted games cannot reach gold or platinum.
 
 ---
 

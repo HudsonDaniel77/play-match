@@ -185,7 +185,11 @@
                   "RESULT_ALREADY_SUBMITTED",
                   "RESULT_ALREADY_VERIFIED",
                   "RESULT_NOT_AUTHORIZED_TO_VERIFY",
-                  "INVALID_RESULT_SCORES"
+                  "INVALID_RESULT_SCORES",
+                  "FEEDBACK_ALREADY_SUBMITTED",
+                  "FEEDBACK_WINDOW_CLOSED",
+                  "FEEDBACK_GAME_NOT_COMPLETED",
+                  "FEEDBACK_INVALID_TARGET"
                 ],
                 "example": "VALIDATION_ERROR"
               },
@@ -306,7 +310,11 @@
           "RESULT_ALREADY_SUBMITTED",
           "RESULT_ALREADY_VERIFIED",
           "RESULT_NOT_AUTHORIZED_TO_VERIFY",
-          "INVALID_RESULT_SCORES"
+          "INVALID_RESULT_SCORES",
+          "FEEDBACK_ALREADY_SUBMITTED",
+          "FEEDBACK_WINDOW_CLOSED",
+          "FEEDBACK_GAME_NOT_COMPLETED",
+          "FEEDBACK_INVALID_TARGET"
         ]
       },
       "GameStatusesEnum": {
@@ -676,6 +684,198 @@
           "reason": {
             "type": "string",
             "maxLength": 500
+          }
+        }
+      },
+      "SubmitFeedbackRequestBody": {
+        "type": "object",
+        "required": [
+          "targetUserId",
+          "attendance"
+        ],
+        "properties": {
+          "targetUserId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$"
+          },
+          "attendance": {
+            "type": "string",
+            "enum": [
+              "attended",
+              "no_show"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "GameFeedbackPayload": {
+        "type": "object",
+        "required": [
+          "id",
+          "gameId",
+          "reporterUserId",
+          "targetUserId",
+          "attendance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "gameId": {
+            "type": "string"
+          },
+          "reporterUserId": {
+            "type": "string"
+          },
+          "targetUserId": {
+            "type": "string"
+          },
+          "attendance": {
+            "type": "string",
+            "enum": [
+              "attended",
+              "no_show"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GameFeedbackResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GameFeedbackPayload"
+          }
+        }
+      },
+      "GameFeedbackListResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "feedback"
+            ],
+            "properties": {
+              "feedback": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GameFeedbackPayload"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ReliabilitySummary": {
+        "type": "object",
+        "required": [
+          "score",
+          "tier",
+          "gamesCounted",
+          "onTimeLeaves",
+          "lateLeaves",
+          "noShows"
+        ],
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "bronze",
+              "silver",
+              "gold",
+              "platinum"
+            ]
+          },
+          "gamesCounted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "onTimeLeaves": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lateLeaves": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "noShows": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ReliabilityResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "userId",
+              "reliability"
+            ],
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "reliability": {
+                "$ref": "#/components/schemas/ReliabilitySummary"
+              }
+            }
           }
         }
       }
@@ -1706,6 +1906,117 @@
         }
       }
     },
+    "/api/v1/games/{id}/feedback": {
+      "get": {
+        "tags": [
+          "Games - Feedback"
+        ],
+        "summary": "List attendance feedback for a game",
+        "description": "Host sees all feedback; other joined participants see only feedback about themselves",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$"
+            },
+            "description": "Game ObjectId (24-character hex)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedback retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameFeedbackListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Games - Feedback"
+        ],
+        "summary": "Record attendance feedback for a player (host only)",
+        "description": "Host records whether a joined player attended or was a no-show. Game must be completed and within the feedback window. One entry per player per game.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$"
+            },
+            "description": "Game ObjectId (24-character hex)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitFeedbackRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameFeedbackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          }
+        }
+      }
+    },
     "/api/v1/games/{id}/join": {
       "post": {
         "tags": [
@@ -2691,6 +3002,85 @@
         "responses": {
           "200": {
             "description": "Predicted rating deltas"
+          }
+        }
+      }
+    },
+    "/api/v1/reliability/me": {
+      "get": {
+        "tags": [
+          "Reliability"
+        ],
+        "summary": "Get the caller reliability",
+        "description": "Reliability score, tier and attendance counters for the authenticated player",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reliability retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReliabilityResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          }
+        }
+      }
+    },
+    "/api/v1/reliability/{userId}": {
+      "get": {
+        "tags": [
+          "Reliability"
+        ],
+        "summary": "Get another player reliability",
+        "description": "Respects the target profile privacy settings (private profile or hidden ratings return 403)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$"
+            },
+            "description": "User ObjectId (24-character hex)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reliability retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReliabilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/schemas/ApiErrorResponse"
           }
         }
       }

@@ -343,6 +343,35 @@ export const configSchema = z
       .pipe(z.number().int().min(1))
       .default(4),
     FREEFORM_LOCATION_ALLOWED: booleanStringSchema.default(true),
+
+    // Module 11: Feedback & Reliability Configs
+    FEEDBACK_WINDOW_HOURS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(72),
+    RELIABILITY_PRIOR_GAMES: numberStringSchema
+      .pipe(z.number().min(0))
+      .default(5),
+    RELIABILITY_CREDIT_ON_TIME_LEAVE: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0.75),
+    RELIABILITY_CREDIT_LATE_LEAVE: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0.25),
+    RELIABILITY_CREDIT_NO_SHOW: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0),
+    RELIABILITY_MIN_GAMES_FOR_TOP_TIERS: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(3),
+    RELIABILITY_TIER_SILVER_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(70),
+    RELIABILITY_TIER_GOLD_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(85),
+    RELIABILITY_TIER_PLATINUM_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(95),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_TRANSPORT === 'smtp') {
@@ -359,6 +388,19 @@ export const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['MIN_TRAVEL_RADIUS_KM'],
         message: 'MIN_TRAVEL_RADIUS_KM must not exceed MAX_TRAVEL_RADIUS_KM',
+      });
+    }
+    if (
+      !(
+        data.RELIABILITY_TIER_SILVER_MIN < data.RELIABILITY_TIER_GOLD_MIN &&
+        data.RELIABILITY_TIER_GOLD_MIN < data.RELIABILITY_TIER_PLATINUM_MIN
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['RELIABILITY_TIER_SILVER_MIN'],
+        message:
+          'RELIABILITY_TIER_SILVER_MIN < RELIABILITY_TIER_GOLD_MIN < RELIABILITY_TIER_PLATINUM_MIN must hold',
       });
     }
     if (data.RATING_MIN >= data.RATING_MAX) {
@@ -513,6 +555,17 @@ const defaultTestEnv = {
   VENUE_SUGGESTION_RADIUS_KM: '30',
   MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION: '4',
   FREEFORM_LOCATION_ALLOWED: 'true',
+
+  // Module 11 Test Defaults
+  FEEDBACK_WINDOW_HOURS: '72',
+  RELIABILITY_PRIOR_GAMES: '5',
+  RELIABILITY_CREDIT_ON_TIME_LEAVE: '0.75',
+  RELIABILITY_CREDIT_LATE_LEAVE: '0.25',
+  RELIABILITY_CREDIT_NO_SHOW: '0',
+  RELIABILITY_MIN_GAMES_FOR_TOP_TIERS: '3',
+  RELIABILITY_TIER_SILVER_MIN: '70',
+  RELIABILITY_TIER_GOLD_MIN: '85',
+  RELIABILITY_TIER_PLATINUM_MIN: '95',
 };
 
 const rawSourceEnv =
