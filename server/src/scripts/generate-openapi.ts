@@ -8,6 +8,7 @@ import { Roles } from '../constants/roles.js';
 import { TeamSideKeys, TeamBalanceMethods } from '../constants/team-constants.js';
 import { ResultStatuses, RatingStatuses } from '../constants/result-constants.js';
 import { AttendanceStatuses, ReliabilityTiers, FEEDBACK_NOTE_MAX_LENGTH } from '../constants/reliability-constants.js';
+import { RecommendationConfidenceLevels } from '../constants/recommendation-constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -362,6 +363,58 @@ export function generateOpenAPISpec() {
                 reliability: { $ref: '#/components/schemas/ReliabilitySummary' },
               },
             },
+          },
+        },
+        RecommendationFactor: {
+          type: 'object',
+          required: ['name', 'value', 'weight'],
+          properties: {
+            name: { type: 'string', example: 'Skill Match' },
+            value: { type: 'number', minimum: 0, maximum: 1, example: 0.95 },
+            weight: { type: 'number', minimum: 0, maximum: 1, example: 0.35 },
+          },
+        },
+        RecommendationItem: {
+          type: 'object',
+          required: ['gameId', 'sportKey', 'title', 'score', 'confidence', 'factors', 'reasons'],
+          properties: {
+            gameId: { type: 'string' },
+            sportKey: { type: 'string', example: 'badminton' },
+            title: { type: 'string', example: 'Intermediate Singles' },
+            score: { type: 'number', minimum: 0, maximum: 1, example: 0.92 },
+            confidence: {
+              type: 'string',
+              enum: Object.values(RecommendationConfidenceLevels),
+              example: 'high',
+            },
+            factors: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/RecommendationFactor' },
+            },
+            reasons: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['Close skill match (within 30 Elo points)'],
+            },
+          },
+        },
+        RecommendationsPayload: {
+          type: 'object',
+          required: ['items'],
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/RecommendationItem' },
+            },
+          },
+        },
+        RecommendationsResponse: {
+          type: 'object',
+          required: ['success', 'data'],
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Operation completed successfully' },
+            data: { $ref: '#/components/schemas/RecommendationsPayload' },
           },
         },
       },
@@ -1818,6 +1871,73 @@ export function generateOpenAPISpec() {
             { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           ],
           responses: { '200': { description: 'Venue reinstated' } },
+        },
+      },
+      '/api/v1/recommendations': {
+        get: {
+          tags: ['Recommendations'],
+          summary: 'Get personalized game recommendations',
+          description:
+            'Evaluates candidate games based on skill match, geographic proximity, calendar availability, and host reliability.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { $ref: '#/components/parameters/ClientTypeHeader' },
+            { $ref: '#/components/parameters/RequestIdHeader' },
+            {
+              name: 'sportKey',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Filter recommendations by sport',
+            },
+            {
+              name: 'limit',
+              in: 'query',
+              required: false,
+              schema: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
+              description: 'Maximum number of recommendations to return',
+            },
+            {
+              name: 'maxDistanceKm',
+              in: 'query',
+              required: false,
+              schema: { type: 'number' },
+              description: 'Maximum distance in km from user home location',
+            },
+            {
+              name: 'minScore',
+              in: 'query',
+              required: false,
+              schema: { type: 'number', minimum: 0, maximum: 1 },
+              description: 'Minimum match score threshold',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Recommendations retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/RecommendationsResponse' },
+                },
+              },
+            },
+            '401': {
+              description: 'Authentication required',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ApiErrorResponse' },
+                },
+              },
+            },
+            '404': {
+              description: 'Player profile not found',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ApiErrorResponse' },
+                },
+              },
+            },
+          },
         },
       },
     },

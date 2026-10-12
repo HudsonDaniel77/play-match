@@ -188,4 +188,9 @@ export const Messages = {
     PROFILE_NOT_FOUND: 'Player profile not found',
     PRIVATE: 'This player has chosen not to share their reliability',
   },
+
+  // Module 6 AI Matching & Recommendations
+  RECOMMENDATIONS: {
+    FETCH_SUCCESS: 'Game recommendations retrieved successfully',
+  },
 } as const;

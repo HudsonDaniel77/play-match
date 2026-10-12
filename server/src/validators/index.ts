@@ -4,3 +4,7 @@ export * from './profile.validators.js';
 export * from './rating.validators.js';
 export * from './game.validators.js';
 export * from './venue.validators.js';
+export * from './team.validators.js';
+export * from './game-result.validators.js';
+export * from './reliability.validators.js';
+export * from './recommendation.validators.js';

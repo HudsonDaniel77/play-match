@@ -20,3 +20,7 @@ export * from './court-reservation.service.js';
 export * from './discovery.service.js';
 export * from './venue-discovery.service.js';
 export * from './venue-suggestion.service.js';
+export * from './team.service.js';
+export * from './game-result.service.js';
+export * from './reliability.service.js';
+export * from './recommendation.service.js';
