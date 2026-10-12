@@ -5,6 +5,9 @@ PlayMatch is an AI-powered, location-aware sports matchmaking platform. This rep
 Implemented Modules:
 - **Module 1: Authentication & Identity**
 - **Module 2: Player Profile & Onboarding**
+- **Module 3: Rating Engine (Elo, Ledger & Leaderboards)**
+- **Module 4: Games & Scheduling**
+- **Module 5: Geo Discovery & Venues**
 
 ---
 
@@ -115,9 +118,21 @@ npm start
 
 ## Sports Catalog Seeding
 
-Sports are managed as catalog data in the `sports` collection, loaded from `SPORTS_SEED_FILE` (default: `./src/data/sports-seed.json`). The seed command is completely idempotent:
+Sports are managed as catalog data in the `sports` collection, loaded from `SPORTS_SEED_FILE` (default: `./src/data/sports-seed.json`). The project is currently scoped to three primary sports: **Badminton**, **Football**, and **Cricket**.
+
+### Seeding Command & Options
 ```bash
+# Standard idempotent upsert of catalog sports
 npm run seed:sports
+
+# Dry-run mode: report planned changes without touching the database
+npm run seed:sports -- --dry-run
+
+# Deactivate missing sports: marks catalog sports absent from the seed file as inactive (never deletes)
+npm run seed:sports -- --deactivate-missing
+
+# Dry-run with deactivation report
+npm run seed:sports -- --dry-run --deactivate-missing
 ```
 
 ### Seed File Format (`sports-seed.json`)
@@ -128,21 +143,28 @@ npm run seed:sports
     "name": "Badminton",
     "isActive": true,
     "isTeamBased": false,
+    "allowsDraws": false,
     "minPlayers": 2,
     "maxPlayers": 4,
+    "formats": [
+      { "key": "singles", "label": "Singles (1v1)", "playersPerSide": 1, "isDefault": true },
+      { "key": "doubles", "label": "Doubles (2v2)", "playersPerSide": 2, "isDefault": false }
+    ],
+    "scoring": {
+      "type": "sets",
+      "allowsDraws": false
+    },
+    "movWeight": 0.4,
     "skillBands": [
       { "key": "beginner", "label": "Beginner", "order": 1, "seedRating": 1000 },
       { "key": "intermediate", "label": "Intermediate", "order": 2, "seedRating": 1200 },
       { "key": "advanced", "label": "Advanced", "order": 3, "seedRating": 1400 }
     ],
     "playStyles": [
-      { "key": "casual", "label": "Casual / Friendly Rally" },
-      { "key": "competitive", "label": "Competitive / Match Play" }
+      { "key": "attacking", "label": "Attacking / Smash-Heavy" },
+      { "key": "defensive", "label": "Defensive / Placement" }
     ],
-    "positions": [
-      { "key": "singles", "label": "Singles Specialist" },
-      { "key": "doubles_front", "label": "Doubles Front Court" }
-    ]
+    "positions": []
   }
 ]
 ```
@@ -543,6 +565,268 @@ npm test
 
 ---
 
+## Module 3: Elo Rating Engine, Ledger & Leaderboards Architecture
+
+### 1. Pure Rating Math & Formulas
+
+The core calculation logic resides in `src/engine/rating/` as a pure TypeScript library independent of Express, Mongoose, or database dependencies.
+
+- **Expected Score ($E$):**
+  $$E = \frac{1}{1 + 10^{\frac{R_{\text{opponent}} - R_{\text{self}}}{D}}}$$
+  where $D$ is the scale divisor (`RATING_SCALE_DIVISOR`, default `400`).
+
+- **Outcome Score ($S$):**
+  - Win: $S = 1.0$
+  - Draw: $S = 0.5$ (only permitted if `allowsDraws: true` in the sport catalog entry)
+  - Loss: $S = 0.0$
+
+- **Team Rating Aggregation:**
+  For multiplayer matches, the opposing rating is aggregated using a strategy interface (default: arithmetic mean of player ratings):
+  $$R_{\text{team}} = \frac{1}{N} \sum_{i=1}^N R_i$$
+
+- **Dynamic K-Factor & Multipliers:**
+  $$K_{\text{effective}} = K_{\text{base}} \times M_{\text{inactivity}} \times M_{\text{mov}}$$
+  - **Tiered K-Factor ($K_{\text{base}}$):** Configured via `RATING_K_TIERS`. New/provisional players (e.g., $\le 10$ games) have higher $K$ (e.g., 40) for fast convergence; veterans have lower $K$ (e.g., 16).
+  - **Inactivity Multiplier ($M_{\text{inactivity}}$):** If days since `lastRatedAt` exceed `INACTIVITY_DAYS` (default 30), $K$ is multiplied by `INACTIVITY_K_MULTIPLIER` (default 1.25) to accelerate rating re-calibration.
+  - **Margin of Victory ($M_{\text{mov}}$):** When `MOV_ENABLED=true`, a log-scaled margin multiplier scales $K$ based on point difference.
+
+- **Per-Player Rating Delta:**
+  $$\Delta = \text{round}(K_{\text{effective}} \times (S - E))$$
+  $$R_{\text{new}} = \text{clamp}(R_{\text{old}} + \Delta, R_{\text{min}}, R_{\text{max}})$$
+
+- **Worked Example:**
+  - Player A ($R_A = 1000$, 0 games, $K = 32$) plays against Player B ($R_B = 1100$, 0 games, $K = 32$) in Badminton (Singles).
+  - Expected score for Player A:
+    $$E_A = \frac{1}{1 + 10^{\frac{1100 - 1000}{400}}} = \frac{1}{1 + 10^{0.25}} \approx \frac{1}{1 + 1.778} \approx 0.360$$
+  - Player A wins ($S_A = 1.0$):
+    $$\Delta_A = 32 \times (1.0 - 0.360) = 32 \times 0.640 = +20.5 \text{ points}$$
+    $$R_{\text{new}, A} = 1000 + 20.5 = 1020.5$$
+  - Player B loses ($S_B = 0.0, E_B = 0.640$):
+    $$\Delta_B = 32 \times (0.0 - 0.640) = -20.5 \text{ points}$$
+    $$R_{\text{new}, B} = 1100 - 20.5 = 1079.5$$
+
+---
+
+### 2. Module 3 Environment Variables Reference
+
+| Variable | Type | Default | Description |
+|---|---|---|---|
+| `RATING_SCALE_DIVISOR` | number | `400` | Scale divisor $D$ in logistic Elo formula |
+| `RATING_K_TIERS` | JSON | `[...]` | Sorted tiers mapping games played to base K-factor |
+| `MOV_ENABLED` | boolean | `false` | Enable Margin of Victory scaling |
+| `MOV_WEIGHT` | number | `0.5` | Weight exponent for Margin of Victory |
+| `RATING_MIN` | number | `100` | Minimum rating floor |
+| `RATING_MAX` | number | `3000` | Maximum rating ceiling |
+| `RATING_DECIMALS` | number | `1` | Decimal precision for stored ratings |
+| `TEAM_RATING_AGGREGATION` | string | `mean` | Strategy for team ratings (`mean`) |
+| `INACTIVITY_DAYS` | number | `30` | Inactivity threshold in days |
+| `INACTIVITY_K_MULTIPLIER` | number | `1.25` | K multiplier applied when inactive |
+| `CONFIDENCE_GAMES_THRESHOLD`| number | `30` | Games threshold for rating certainty (0-1) |
+| `CONFIDENCE_RECENCY_HALF_LIFE_DAYS`| number | `45` | Half-life decay for recency confidence |
+| `LEADERBOARD_PAGE_SIZE_DEFAULT` | number | `20` | Default page size for leaderboards |
+| `LEADERBOARD_PAGE_SIZE_MAX` | number | `100` | Maximum page size for leaderboards |
+| `LEADERBOARD_EXCLUDE_PROVISIONAL` | boolean | `true` | Hide provisional players from public leaderboard |
+| `HISTORY_PAGE_SIZE_DEFAULT` | number | `20` | Default page size for rating history |
+| `HISTORY_PAGE_SIZE_MAX` | number | `50` | Maximum page size for rating history |
+| `MAX_PLAYERS_PER_SIDE_FALLBACK` | number | `11` | Maximum players per side fallback |
+
+---
+
+### 3. Rating Migration Instructions
+
+Module 3 adds tracking fields (`peakRating`, `wins`, `losses`, `draws`, `lastRatedAt`) to the `Rating` collection.
+
+To backfill existing ratings safely without modifying existing values:
+
+1. **Dry-Run Mode (inspect count without writes):**
+   ```bash
+   npm run migrate:ratings -- --dry-run
+   ```
+2. **Execute Backfill:**
+   ```bash
+   npm run migrate:ratings
+   ```
+   The migration is fully idempotent: running it repeatedly modifies 0 documents once backfilled.
+
+---
+
+### 4. Module 3 API Endpoints & cURL Examples
+
+#### Apply Match Result (Admin only)
+```bash
+curl -X POST http://localhost:3000/api/v1/admin/ratings/match-results \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sportKey": "badminton",
+    "source": { "type": "admin_manual", "id": "match-game-201" },
+    "sides": [
+      { "sideKey": "side_a", "playerIds": ["65a000000000000000000001"], "score": 21 },
+      { "sideKey": "side_b", "playerIds": ["65a000000000000000000002"], "score": 19 }
+    ]
+  }'
+```
+
+#### Void Match Result (Admin only)
+*Voids the result if and only if no subsequent games were played by any participant.*
+```bash
+curl -X POST http://localhost:3000/api/v1/admin/ratings/match-results/<MATCH_RESULT_ID>/void \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+
+#### Preview Match Outcome & Hypothetical Deltas (Player)
+```bash
+curl -X POST http://localhost:3000/api/v1/ratings/preview \
+  -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sportKey": "badminton",
+    "sides": [
+      { "sideKey": "side_a", "playerIds": ["65a000000000000000000001"] },
+      { "sideKey": "side_b", "playerIds": ["65a000000000000000000002"] }
+    ]
+  }'
+```
+
+#### Get My Ratings Across All Sports (Player)
+```bash
+curl -X GET http://localhost:3000/api/v1/ratings/me \
+  -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>"
+```
+
+#### Get My Rating History for a Sport (Cursor Paginated)
+```bash
+curl -X GET "http://localhost:3000/api/v1/ratings/me/badminton/history?limit=10" \
+  -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>"
+```
+
+#### Get Plain-Language & Structured Explanation for a Rating Change
+```bash
+curl -X GET http://localhost:3000/api/v1/ratings/me/badminton/events/<EVENT_ID>/explanation \
+  -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>"
+```
+
+#### Get Sport Leaderboard (Privacy-filtered, Cursor Paginated)
+```bash
+curl -X GET "http://localhost:3000/api/v1/leaderboards/badminton?limit=20" \
+  -H "Authorization: Bearer <PLAYER_ACCESS_TOKEN>"
+```
+
+---
+
+## Module 4: Games & Scheduling Architecture
+
+### 1. State Machine & Lifecycle Transitions
+
+Games follow a strict state machine validated in `src/services/game-transition.service.ts`:
+
+| From Status | Allowed Next Statuses | Trigger / Actor |
+|---|---|---|
+| `open` | `full`, `confirmed`, `cancelled`, `expired` | Host, Player joins, or Sweep |
+| `full` | `open`, `confirmed`, `cancelled`, `expired` | Participant leaves, Host, or Sweep |
+| `confirmed` | `open`, `in_progress`, `cancelled` | Player leaves (invalidates roster), Sweep, Host |
+| `in_progress`| `completed`, `cancelled` | Sweep (grace period elapsed), Admin |
+| `completed` | *(terminal)* | — |
+| `cancelled` | *(terminal)* | Host, Admin, or Sweep |
+| `expired` | *(terminal)* | Sweep (cutoff reached without valid roster) |
+
+### 2. Race-Safe Atomic Seat Claims & Waitlist
+- **Direct Joining**: Uses atomic query `{ _id: gameId, status: { $in: ['open', 'full'] }, participantCount: { $lt: maxPlayers } }` with `$inc: { participantCount: 1 }`. If capacity is reached, status switches to `full` in the same transaction.
+- **Waitlist**: If full, participant joins waitlist atomically up to `WAITLIST_MAX_SIZE`. Oldest waitlisted participant is automatically promoted via FIFO order when a joined participant leaves or is removed.
+- **Schedule Conflict Detection**: Uses denormalized interval `startsAt`/`endsAt` stored on active `joined` participations to prevent overlapping bookings across games.
+
+### 3. Location Privacy & Future Venue Reconciliation
+- **Location Coarsening**: Non-host, non-joined viewers receive coarsened geographic coordinates rounded to `LOCATION_PUBLIC_PRECISION_DECIMALS` (default 2 decimals ~1.1km).
+- **Exact Details Protection**: `courtName` and `addressName` are stripped from responses for users who have not yet joined.
+- **Venue Model Evolution Note**: `courtName` and `addressName` are free-text fields in Module 4. When Module 5 introduces the formal Venue catalog, these fields will be reconciled with structured venue and court entities so the game does not maintain competing representations of location.
+
+---
+
+### Module 4 Endpoints Reference
+
+#### Create a Game
+```bash
+POST /api/v1/games
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "sportKey": "badminton",
+  "formatKey": "singles",
+  "startsAt": "2026-06-01T14:00:00.000Z",
+  "endsAt": "2026-06-01T15:00:00.000Z",
+  "location": {
+    "type": "Point",
+    "coordinates": [77.5946, 12.9716],
+    "addressName": "Kanteerava Stadium"
+  },
+  "courtName": "Court 1",
+  "joinPolicy": "open",
+  "visibility": "public"
+}
+```
+
+#### Lookup Game by Invite Code (Preview with Coarsened Location)
+```bash
+GET /api/v1/games/code/:code
+# Location is coarsened, addressName and courtName are omitted until joined
+```
+
+#### Join a Game / Request Approval
+```bash
+POST /api/v1/games/:id/join
+Authorization: Bearer <TOKEN>
+# Claims open seat atomically; enqueues to waitlist if full; or requests host approval if joinPolicy is approval
+```
+
+#### Leave a Game
+```bash
+POST /api/v1/games/:id/leave
+Authorization: Bearer <TOKEN>
+# Marks leave as on_time (>60m before startsAt) or late (<60m). Triggers automatic FIFO promotion from waitlist.
+# Note: Host cannot leave their own game.
+```
+
+#### Host Participant Management
+- **Approve Request**: `POST /api/v1/games/:id/participants/:userId/approve`
+- **Decline Request**: `POST /api/v1/games/:id/participants/:userId/decline`
+- **Remove Joined Participant**: `DELETE /api/v1/games/:id/participants/:userId` (with optional `{ reason }` body)
+
+#### Cancel a Game
+```bash
+POST /api/v1/games/:id/cancel
+Authorization: Bearer <HOST_OR_ADMIN_TOKEN>
+Content-Type: application/json
+
+{
+  "reasonCode": "host_cancelled",
+  "reasonText": "Rain forecast"
+}
+```
+
+#### View Roster
+```bash
+GET /api/v1/games/:id/roster
+Authorization: Bearer <TOKEN>
+# Returns joined, requested (host only), and waitlisted players with their current ratings
+```
+
+#### View Audit Timeline & Events
+```bash
+GET /api/v1/games/:id/events
+# (Also available at GET /api/v1/games/:id/timeline)
+Authorization: Bearer <TOKEN>
+# Returns append-only event stream (exactly one event per lifecycle action)
+```
+
+#### View My Games (Filtered & Paginated)
+```bash
+GET /api/v1/games/me?page=1&limit=20&status=open&role=host
+Authorization: Bearer <TOKEN>
+```
+
+---
+
 ## Codebase Structure
 
 ```
@@ -648,3 +932,33 @@ server/
 ├── vitest.config.ts
 └── README.md
 ```
+
+---
+
+## Module 5: Geo Discovery & Venues Architecture
+
+Module 5 adds real venue management, race-safe court reservation locking, location-aware game & venue discovery, and privacy-preserving venue suggestions:
+
+### 1. Venue Catalog & Lifecycle
+- **Statuses**: `pending_approval` → `active` (via admin approval) → `suspended` / `archived`.
+- **Courts & Operating Hours**: Each venue defines weekly operating hours slots and courts supporting specific sports from the catalog.
+- **Safety checks on modifications**: Changes to operating hours, closures, or court deactivations reject if upcoming active games would be impacted, unless an admin override is provided.
+- **Dynamic Status**: Games linked to venues compute `venueStatus` at read time from the referenced venue document.
+
+### 2. Concurrency-Safe Court Reservations
+- Race-safe isolation prevents two games from reserving the same court at overlapping times (incorporating configured buffer intervals).
+- Guard locking uses atomic updates on pre-created `CourtGuard` documents per court.
+- Dual-guard acquisitions (such as when changing venues or courts) enforce deterministic sorted order to prevent deadlocks.
+
+### 3. Location Privacy & Game Discovery (`GET /api/v1/games/discover`)
+- Free-form game exact coordinates are kept confidential (only visible to host and joined roster players).
+- Free-form game distances in discovery are coarsened to `DISTANCE_PRIVACY_ROUNDING_KM` (`1.0 km`) to avoid triangulation attacks.
+- Keyset cursor pagination uses displayed (rounded) distance or start time, ensuring exact coordinates are never exposed via cursor tokens.
+- Calculates transparent match signals: `distanceKm`, `ratingGap`, `ratingInRange`, `availabilityFit`, `travelRadiusFit`, `seatsLeft`.
+
+### 4. Venue Suggestions (`GET /api/v1/games/:id/venue-suggestions`)
+- Available to the game host when roster meets `MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION` (excluding the host).
+- Computes geographic centroid of eligible participants (excluding players with `visibility.location === 'hidden'`).
+- The centroid is computed server-side and never returned in API responses to prevent privacy leaks.
+- Suggestions are ranked transparently by average travel distance and maximum travel distance.
+

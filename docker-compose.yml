@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:${MONGO_IMAGE_TAG:-7.0}
+    container_name: ${MONGO_CONTAINER_NAME:-playmatch-mongo}
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-playmatch}
+    entrypoint:
+      - bash
+      - -c
+      - |
+        /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all
+    volumes:
+      - playmatch-mongo-data:/data/db
+    healthcheck:
+      test: |
+        mongosh --quiet --eval "
+          try {
+            rs.status();
+            quit(0);
+          } catch (e) {
+            try {
+              rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] });
+              quit(0);
+            } catch (err) {
+              quit(1);
+            }
+          }
+        "
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  playmatch-mongo-data:
+    name: ${MONGO_VOLUME_NAME:-playmatch-mongo-data}

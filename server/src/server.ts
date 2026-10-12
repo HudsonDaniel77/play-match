@@ -25,8 +25,19 @@ async function startServer(): Promise<void> {
       );
     });
 
+    // Start Module 4 lifecycle sweep background timer
+    const sweepInterval = setInterval(async () => {
+      try {
+        const { runLifecycleSweep } = await import('./services/game-sweep.service.js');
+        await runLifecycleSweep();
+      } catch (sweepErr) {
+        logger.error({ err: sweepErr }, 'Error during background lifecycle sweep');
+      }
+    }, config.LIFECYCLE_SWEEP_INTERVAL_MS);
+
     const shutdown = async (signal: string) => {
       logger.info({ signal }, 'Graceful shutdown signal received');
+      clearInterval(sweepInterval);
 
       if (server) {
         server.close(async () => {

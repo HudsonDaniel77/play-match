@@ -9,6 +9,12 @@ export interface IRating {
   seedRating: number;
   seedBandKey: string;
   gamesPlayed: number;
+  peakRating: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  lastRatedAt: Date | null;
+  /** @deprecated Superseded by RatingEvent ledger in Module 3 */
   history: unknown[];
   createdAt: Date;
   updatedAt: Date;
@@ -50,6 +56,31 @@ const ratingSchema = new Schema<IRatingDocument>(
       default: 0,
       min: 0,
     },
+    peakRating: {
+      type: Number,
+      default: function (this: IRatingDocument) {
+        return this.rating;
+      },
+    },
+    wins: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    losses: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    draws: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastRatedAt: {
+      type: Date,
+      default: null,
+    },
     history: {
       type: [Schema.Types.Mixed],
       default: [],
@@ -62,6 +93,11 @@ const ratingSchema = new Schema<IRatingDocument>(
       transform(doc, ret: Record<string, unknown>) {
         ret.id = ret._id ? String(ret._id) : undefined;
         ret.provisional = doc.gamesPlayed < config.PROVISIONAL_GAMES_THRESHOLD;
+        ret.peakRating = doc.peakRating ?? doc.rating;
+        ret.wins = doc.wins ?? 0;
+        ret.losses = doc.losses ?? 0;
+        ret.draws = doc.draws ?? 0;
+        ret.lastRatedAt = doc.lastRatedAt ?? null;
         delete ret._id;
         delete ret.__v;
         return ret;
@@ -71,6 +107,11 @@ const ratingSchema = new Schema<IRatingDocument>(
       transform(doc, ret: Record<string, unknown>) {
         ret.id = ret._id ? String(ret._id) : undefined;
         ret.provisional = doc.gamesPlayed < config.PROVISIONAL_GAMES_THRESHOLD;
+        ret.peakRating = doc.peakRating ?? doc.rating;
+        ret.wins = doc.wins ?? 0;
+        ret.losses = doc.losses ?? 0;
+        ret.draws = doc.draws ?? 0;
+        ret.lastRatedAt = doc.lastRatedAt ?? null;
         delete ret._id;
         delete ret.__v;
         return ret;

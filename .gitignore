@@ -12,11 +12,13 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.local.example
 **/.env
 **/.env.*
 !**/.env.example
+!**/.env.local.example
 
-# Logs & OS files
-*.log
-.DS_Store
-Thumbs.db
+# Runtime files
+.runtime/
+**/.runtime/
+

@@ -137,6 +137,241 @@ export const configSchema = z
       .default(100),
     SPORTS_SEED_FILE: z.string().min(1).default('./src/data/sports-seed.json'),
     DEFAULT_TIMEZONE: z.string().min(1).default('UTC'),
+
+    // Module 3: Rating Engine Configs
+    RATING_SCALE_DIVISOR: numberStringSchema
+      .pipe(z.number().positive())
+      .default(400),
+    RATING_K_TIERS: z
+      .union([
+        z.array(
+          z.object({
+            upToGames: z.number().int().positive().nullable().optional(),
+            k: z.number().positive(),
+          }),
+        ),
+        z.string(),
+      ])
+      .default(
+        '[{"upToGames":10,"k":40},{"upToGames":30,"k":32},{"upToGames":null,"k":24}]',
+      )
+      .transform((val, ctx) => {
+        let parsed: unknown;
+        if (typeof val === 'string') {
+          try {
+            parsed = JSON.parse(val);
+          } catch {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'RATING_K_TIERS must be valid JSON',
+            });
+            return z.NEVER;
+          }
+        } else {
+          parsed = val;
+        }
+
+        const tierSchema = z.array(
+          z.object({
+            upToGames: z.number().int().positive().nullable().optional(),
+            k: z.number().positive(),
+          }),
+        );
+
+        const res = tierSchema.safeParse(parsed);
+        if (!res.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'RATING_K_TIERS must be an array of tiers with positive k',
+          });
+          return z.NEVER;
+        }
+        return res.data;
+      }),
+    MOV_ENABLED: booleanStringSchema.default(true),
+    MOV_WEIGHT: numberStringSchema
+      .pipe(z.number().min(0).max(5))
+      .default(0.5),
+    RATING_MIN: numberStringSchema
+      .pipe(z.number().min(0))
+      .default(100),
+    RATING_MAX: numberStringSchema
+      .pipe(z.number().min(500))
+      .default(3000),
+    RATING_DECIMALS: numberStringSchema
+      .pipe(z.number().int().min(0).max(4))
+      .default(1),
+    TEAM_RATING_AGGREGATION: z.enum(['mean']).default('mean'),
+    INACTIVITY_DAYS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(30),
+    INACTIVITY_K_MULTIPLIER: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(1.5),
+    CONFIDENCE_GAMES_THRESHOLD: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(30),
+    CONFIDENCE_RECENCY_HALF_LIFE_DAYS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(60),
+    LEADERBOARD_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    LEADERBOARD_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    LEADERBOARD_EXCLUDE_PROVISIONAL: booleanStringSchema.default(true),
+    HISTORY_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    HISTORY_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    MAX_PLAYERS_PER_SIDE_FALLBACK: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(11),
+
+    // Module 4: Games & Scheduling Configs
+    GAME_CREATION_LEAD_TIME_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(30),
+    GAME_MAX_ADVANCE_DAYS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(14),
+    GAME_MIN_DURATION_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(15))
+      .default(30),
+    GAME_MAX_DURATION_MINUTES: numberStringSchema
+      .pipe(z.number().int().max(1440))
+      .default(240),
+    JOIN_CUTOFF_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    LEAVE_CUTOFF_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(60),
+    WAITLIST_AUTO_EXPIRE_MINUTES_BEFORE_START: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    JOIN_REQUEST_AUTO_EXPIRE_HOURS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(24),
+    AUTO_CONFIRM_AT_CUTOFF: booleanStringSchema.default(true),
+    AUTO_IN_PROGRESS_GRACE_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(5),
+    AUTO_COMPLETE_DELAY_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(30),
+    LIFECYCLE_SWEEP_INTERVAL_MS: numberStringSchema
+      .pipe(z.number().int().min(5000))
+      .default(60000),
+    WAITLIST_MAX_SIZE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    RATING_ALLOW_UNRATED_DEFAULT: booleanStringSchema.default(true),
+    DEFAULT_RATING_WINDOW: numberStringSchema
+      .pipe(z.number().min(50))
+      .default(200),
+    MAX_RATING_WINDOW: numberStringSchema
+      .pipe(z.number().min(100))
+      .default(1000),
+    CANCEL_REASON_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(10))
+      .default(500),
+    GAMES_LIST_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    GAMES_LIST_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(100),
+    INVITE_CODE_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(6).max(12))
+      .default(8),
+
+    // Module 5: Geo Discovery & Venues
+    DISCOVERY_DEFAULT_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(15),
+    DISCOVERY_MIN_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(0.5))
+      .default(1),
+    DISCOVERY_MAX_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(10))
+      .default(50),
+    DISCOVERY_PAGE_SIZE_DEFAULT: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(20),
+    DISCOVERY_PAGE_SIZE_MAX: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(50),
+    DISCOVERY_MAX_ELIGIBILITY_EXPLAIN_PER_PAGE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    DISTANCE_PRIVACY_ROUNDING_KM: numberStringSchema
+      .pipe(z.number().min(0.1))
+      .default(0.5),
+    VENUE_NAME_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(2))
+      .default(100),
+    VENUE_DESCRIPTION_MAX_LENGTH: numberStringSchema
+      .pipe(z.number().int().min(10))
+      .default(1000),
+    MAX_VENUES_PER_OWNER: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    MAX_COURTS_PER_VENUE: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(20),
+    VENUE_PHOTOS_MAX: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(10),
+    VENUE_AMENITIES_MAX: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(20),
+    VENUE_REQUIRE_ADMIN_APPROVAL: booleanStringSchema.default(true),
+    COURT_BUFFER_MINUTES: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(15),
+    VENUE_SUGGESTION_MAX_RESULTS: numberStringSchema
+      .pipe(z.number().int().positive())
+      .default(5),
+    VENUE_SUGGESTION_RADIUS_KM: numberStringSchema
+      .pipe(z.number().min(1))
+      .default(30),
+    MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(4),
+    FREEFORM_LOCATION_ALLOWED: booleanStringSchema.default(true),
+
+    // Module 11: Feedback & Reliability Configs
+    FEEDBACK_WINDOW_HOURS: numberStringSchema
+      .pipe(z.number().int().min(1))
+      .default(72),
+    RELIABILITY_PRIOR_GAMES: numberStringSchema
+      .pipe(z.number().min(0))
+      .default(5),
+    RELIABILITY_CREDIT_ON_TIME_LEAVE: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0.75),
+    RELIABILITY_CREDIT_LATE_LEAVE: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0.25),
+    RELIABILITY_CREDIT_NO_SHOW: numberStringSchema
+      .pipe(z.number().min(0).max(1))
+      .default(0),
+    RELIABILITY_MIN_GAMES_FOR_TOP_TIERS: numberStringSchema
+      .pipe(z.number().int().min(0))
+      .default(3),
+    RELIABILITY_TIER_SILVER_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(70),
+    RELIABILITY_TIER_GOLD_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(85),
+    RELIABILITY_TIER_PLATINUM_MIN: numberStringSchema
+      .pipe(z.number().int().min(0).max(100))
+      .default(95),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_TRANSPORT === 'smtp') {
@@ -154,6 +389,63 @@ export const configSchema = z
         path: ['MIN_TRAVEL_RADIUS_KM'],
         message: 'MIN_TRAVEL_RADIUS_KM must not exceed MAX_TRAVEL_RADIUS_KM',
       });
+    }
+    if (
+      !(
+        data.RELIABILITY_TIER_SILVER_MIN < data.RELIABILITY_TIER_GOLD_MIN &&
+        data.RELIABILITY_TIER_GOLD_MIN < data.RELIABILITY_TIER_PLATINUM_MIN
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['RELIABILITY_TIER_SILVER_MIN'],
+        message:
+          'RELIABILITY_TIER_SILVER_MIN < RELIABILITY_TIER_GOLD_MIN < RELIABILITY_TIER_PLATINUM_MIN must hold',
+      });
+    }
+    if (data.RATING_MIN >= data.RATING_MAX) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['RATING_MIN'],
+        message: 'RATING_MIN must be strictly less than RATING_MAX',
+      });
+    }
+    if (Array.isArray(data.RATING_K_TIERS) && data.RATING_K_TIERS.length > 0) {
+      const tiers = data.RATING_K_TIERS;
+      // Last tier must be open-ended (upToGames == null)
+      const lastTier = tiers[tiers.length - 1];
+      if (lastTier && lastTier.upToGames != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['RATING_K_TIERS'],
+          message: 'The final K-tier must be open-ended (upToGames must be null or omitted)',
+        });
+      }
+      // Check that preceding tiers have upToGames and are strictly ascending
+      for (let i = 0; i < tiers.length - 1; i++) {
+        const current = tiers[i];
+        const next = tiers[i + 1];
+        if (current && current.upToGames == null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['RATING_K_TIERS'],
+            message: `K-tier at index ${i} must define upToGames before the final tier`,
+          });
+        }
+        if (
+          current &&
+          next &&
+          next.upToGames != null &&
+          current.upToGames != null &&
+          current.upToGames >= next.upToGames
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['RATING_K_TIERS'],
+            message: 'RATING_K_TIERS must be strictly sorted by upToGames in ascending order',
+          });
+        }
+      }
     }
   });
 
@@ -220,6 +512,60 @@ const defaultTestEnv = {
   MAX_AGE: '100',
   SPORTS_SEED_FILE: './src/data/sports-seed.json',
   DEFAULT_TIMEZONE: 'UTC',
+
+  // Module 4 Test Defaults
+  GAME_CREATION_LEAD_TIME_MINUTES: '30',
+  GAME_MAX_ADVANCE_DAYS: '14',
+  GAME_MIN_DURATION_MINUTES: '30',
+  GAME_MAX_DURATION_MINUTES: '240',
+  JOIN_CUTOFF_MINUTES_BEFORE_START: '15',
+  LEAVE_CUTOFF_MINUTES_BEFORE_START: '60',
+  WAITLIST_AUTO_EXPIRE_MINUTES_BEFORE_START: '15',
+  JOIN_REQUEST_AUTO_EXPIRE_HOURS: '24',
+  AUTO_CONFIRM_AT_CUTOFF: 'true',
+  AUTO_IN_PROGRESS_GRACE_MINUTES: '5',
+  AUTO_COMPLETE_DELAY_MINUTES: '30',
+  LIFECYCLE_SWEEP_INTERVAL_MS: '60000',
+  WAITLIST_MAX_SIZE: '10',
+  RATING_ALLOW_UNRATED_DEFAULT: 'true',
+  DEFAULT_RATING_WINDOW: '200',
+  MAX_RATING_WINDOW: '1000',
+  CANCEL_REASON_MAX_LENGTH: '500',
+  GAMES_LIST_PAGE_SIZE_DEFAULT: '20',
+  GAMES_LIST_PAGE_SIZE_MAX: '100',
+  INVITE_CODE_LENGTH: '8',
+
+  // Module 5 Test Defaults
+  DISCOVERY_DEFAULT_RADIUS_KM: '15',
+  DISCOVERY_MIN_RADIUS_KM: '1',
+  DISCOVERY_MAX_RADIUS_KM: '50',
+  DISCOVERY_PAGE_SIZE_DEFAULT: '20',
+  DISCOVERY_PAGE_SIZE_MAX: '50',
+  DISCOVERY_MAX_ELIGIBILITY_EXPLAIN_PER_PAGE: '10',
+  DISTANCE_PRIVACY_ROUNDING_KM: '0.5',
+  VENUE_NAME_MAX_LENGTH: '100',
+  VENUE_DESCRIPTION_MAX_LENGTH: '1000',
+  MAX_VENUES_PER_OWNER: '10',
+  MAX_COURTS_PER_VENUE: '20',
+  VENUE_PHOTOS_MAX: '10',
+  VENUE_AMENITIES_MAX: '20',
+  VENUE_REQUIRE_ADMIN_APPROVAL: 'true',
+  COURT_BUFFER_MINUTES: '15',
+  VENUE_SUGGESTION_MAX_RESULTS: '5',
+  VENUE_SUGGESTION_RADIUS_KM: '30',
+  MIN_PARTICIPANTS_FOR_VENUE_SUGGESTION: '4',
+  FREEFORM_LOCATION_ALLOWED: 'true',
+
+  // Module 11 Test Defaults
+  FEEDBACK_WINDOW_HOURS: '72',
+  RELIABILITY_PRIOR_GAMES: '5',
+  RELIABILITY_CREDIT_ON_TIME_LEAVE: '0.75',
+  RELIABILITY_CREDIT_LATE_LEAVE: '0.25',
+  RELIABILITY_CREDIT_NO_SHOW: '0',
+  RELIABILITY_MIN_GAMES_FOR_TOP_TIERS: '3',
+  RELIABILITY_TIER_SILVER_MIN: '70',
+  RELIABILITY_TIER_GOLD_MIN: '85',
+  RELIABILITY_TIER_PLATINUM_MIN: '95',
 };
 
 const rawSourceEnv =

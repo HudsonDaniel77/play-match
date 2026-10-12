@@ -24,3 +24,19 @@ export function hashToken(token: string): string {
 export function generateUuid(): string {
   return crypto.randomUUID();
 }
+
+/**
+ * Generates a cryptographically secure alphanumeric string of the specified length.
+ * Suitable for invite codes and short tokens.
+ * @param length Number of characters in the output string
+ */
+export function generateRandomAlphaNumeric(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = crypto.randomBytes(length * 2);
+  let result = '';
+  for (let i = 0; i < bytes.length && result.length < length; i++) {
+    const idx = bytes[i]! % chars.length;
+    result += chars[idx];
+  }
+  return result;
+}

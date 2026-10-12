@@ -12,25 +12,25 @@ export const Messages = {
   AUTH_LOGOUT_ALL_SUCCESS: 'All sessions logged out successfully',
   AUTH_REGISTER_SUCCESS: 'User registered successfully',
   AUTH_LOGIN_SUCCESS: 'Logged in successfully',
-  
+
   // Email Verification
   AUTH_EMAIL_VERIFIED_SUCCESS: 'Email verified successfully',
   AUTH_EMAIL_NOT_VERIFIED: 'Email verification is required to perform this action',
   AUTH_RESEND_VERIFICATION_GENERIC: 'If an account with that email exists and is unverified, a verification link has been sent.',
   AUTH_VERIFICATION_TOKEN_INVALID: 'Invalid or expired verification token',
-  
+
   // Password Management
   AUTH_FORGOT_PASSWORD_GENERIC: 'If an account with that email exists, a password reset link has been sent.',
   AUTH_RESET_PASSWORD_SUCCESS: 'Password has been reset successfully',
   AUTH_CHANGE_PASSWORD_SUCCESS: 'Password changed successfully',
   AUTH_RESET_TOKEN_INVALID: 'Invalid or expired password reset token',
   AUTH_CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect',
-  
+
   // User Management & Conflicts
   USER_ALREADY_EXISTS: 'An account with this email address already exists',
   USER_NOT_FOUND: 'User not found',
   FORBIDDEN: 'You do not have permission to perform this action',
-  
+
   // Validation & System
   VALIDATION_ERROR: 'Validation failed',
   NOT_FOUND: 'The requested resource was not found',
@@ -55,4 +55,142 @@ export const Messages = {
   INVALID_AVAILABILITY: 'Availability slots are invalid, overlap, or do not meet minimum duration requirements',
   INVALID_LOCATION: 'Location coordinates or travel radius are invalid',
   INVALID_TIMEZONE: 'Invalid IANA timezone identifier provided',
+
+  // Module 3 Rating Engine
+  MATCH_RESULT_APPLIED_SUCCESS: 'Match result applied successfully',
+  MATCH_RESULT_VOIDED_SUCCESS: 'Match result voided successfully',
+  MATCH_RESULT_NOT_FOUND: 'Match result not found',
+  MATCH_RESULT_ALREADY_VOIDED: 'Match result is already voided',
+  CANNOT_VOID_HISTORIC_RESULT: 'Cannot void match result because one or more participants have subsequent rated matches',
+  DRAW_NOT_ALLOWED: 'Draws are not permitted for this sport',
+  DUPLICATE_PLAYER_IN_MATCH: 'A player cannot appear multiple times or on opposing sides in the same match',
+  INVALID_MATCH_SIDES: 'Match must contain exactly two opposing sides with valid player counts',
+  PLAYER_RATING_NOT_FOUND: 'One or more players do not possess an active rating track for this sport',
+  RATING_EVENT_NOT_FOUND: 'Rating event not found',
+  PREVIEW_CALCULATED_SUCCESS: 'Match preview calculations generated successfully',
+  LEADERBOARD_FETCHED_SUCCESS: 'Leaderboard retrieved successfully',
+  RATINGS_FETCHED_SUCCESS: 'Ratings retrieved successfully',
+  HISTORY_FETCHED_SUCCESS: 'Rating history retrieved successfully',
+  EXPLANATION_FETCHED_SUCCESS: 'Rating explanation retrieved successfully',
+
+  // Module 4 Games & Scheduling — flat keys for backward compatibility
+  GAME_CREATED_SUCCESS: 'Game created successfully',
+  GAME_FETCHED_SUCCESS: 'Game retrieved successfully',
+  GAME_UPDATED_SUCCESS: 'Game updated successfully',
+  GAME_CONFIRMED_SUCCESS: 'Game roster confirmed successfully',
+  GAME_CANCELLED_SUCCESS: 'Game cancelled successfully',
+  GAME_JOINED_SUCCESS: 'Joined game successfully',
+  JOIN_REQUEST_SUBMITTED: 'Join request submitted for host approval',
+  WAITLIST_JOINED_SUCCESS: 'Joined waitlist successfully',
+  GAME_LEFT_SUCCESS: 'Left game successfully',
+  PARTICIPANT_APPROVED_SUCCESS: 'Participant approved successfully',
+  PARTICIPANT_DECLINED_SUCCESS: 'Participant declined successfully',
+  PARTICIPANT_REMOVED_SUCCESS: 'Participant removed successfully',
+  ELIGIBILITY_CHECK_SUCCESS: 'Eligibility check completed successfully',
+  PARTICIPANTS_FETCHED_SUCCESS: 'Game participants retrieved successfully',
+  EVENTS_FETCHED_SUCCESS: 'Game audit timeline retrieved successfully',
+  GAMES_FETCHED_SUCCESS: 'Games retrieved successfully',
+
+  GAMES: {
+    GAME_CREATED: 'Game created successfully',
+    FETCH_SUCCESS: 'Game retrieved successfully',
+    GAME_UPDATED: 'Game updated successfully',
+    GAME_CANCELLED: 'Game cancelled successfully',
+    STARTS_AT_TOO_SOON: 'Game must be scheduled at least GAME_CREATION_LEAD_TIME_MINUTES minutes in advance',
+    STARTS_AT_TOO_FAR: 'Game cannot be scheduled more than GAME_MAX_ADVANCE_DAYS days in advance',
+    DURATION_INVALID: 'Game duration must be between the configured minimum and maximum',
+    SPORT_NOT_FOUND: 'Sport not found in catalog',
+    FORMAT_NOT_FOUND: 'Format not found for this sport',
+    SPORT_NOT_IN_PROFILE: 'You must have this sport configured in your profile to join',
+    RATING_RANGE_INVALID: 'Rating range minimum must not exceed maximum',
+    OUTSIDE_RATING_RANGE: 'Your rating is outside the allowed range for this game',
+    SCHEDULE_CONFLICT: 'You already have a joined game that overlaps with this time slot',
+    NOT_FOUND: 'Game not found',
+    INVALID_INVITE_CODE: 'Invalid or expired invite code',
+    FORBIDDEN_OPERATION: 'You are not authorized to perform this action on this game',
+    GAME_LOCKED: 'This game is locked and cannot be edited at this time',
+    ALREADY_TERMINAL: 'This game is already in a terminal state',
+    ALREADY_FULL: 'Game is already full',
+    WAITLIST_FULL: 'Waitlist is at maximum capacity',
+    INVALID_STATUS_TRANSITION: 'This status transition is not allowed',
+    ALREADY_JOINED: 'You are already a participant in this game',
+    PAST_CUTOFF: 'The join cutoff time has passed for this game',
+    HOST_CANNOT_LEAVE: 'The host cannot leave a game they created',
+    NOT_PARTICIPANT: 'You are not an active participant in this game',
+    NO_PENDING_REQUEST: 'No pending join request found for this user',
+    JOIN_SUCCESS: 'Successfully joined the game',
+    WAITLIST_SUCCESS: 'Added to the waitlist',
+    JOIN_REQUEST_SUBMITTED: 'Join request submitted for host approval',
+    LEAVE_SUCCESS: 'Successfully left the game',
+    REQUEST_APPROVED: 'Join request approved',
+    REQUEST_DECLINED: 'Join request declined',
+    PARTICIPANT_REMOVED: 'Participant removed from game',
+  },
+
+  // Module 5 Venues & Discovery
+  VENUES: {
+    CREATED_SUCCESS: 'Venue created successfully',
+    FETCH_SUCCESS: 'Venue retrieved successfully',
+    UPDATED_SUCCESS: 'Venue updated successfully',
+    APPROVED_SUCCESS: 'Venue approved successfully',
+    SUSPENDED_SUCCESS: 'Venue suspended successfully',
+    REINSTATED_SUCCESS: 'Venue reinstated successfully',
+    ARCHIVED_SUCCESS: 'Venue archived successfully',
+    COURT_ADDED_SUCCESS: 'Court added to venue successfully',
+    COURT_UPDATED_SUCCESS: 'Court updated successfully',
+    HOURS_UPDATED_SUCCESS: 'Operating hours updated successfully',
+    CLOSURE_ADDED_SUCCESS: 'Closure scheduled successfully',
+    CLOSURE_REMOVED_SUCCESS: 'Closure removed successfully',
+    AVAILABILITY_FETCHED_SUCCESS: 'Venue court availability retrieved successfully',
+    DISCOVERY_SUCCESS: 'Venues discovered successfully',
+    GAMES_DISCOVERY_SUCCESS: 'Games discovered successfully',
+    SUGGESTIONS_SUCCESS: 'Venue suggestions calculated successfully',
+  },
+
+  // Module 7 Team Formation
+  TEAMS: {
+    GENERATED_SUCCESS: 'Teams generated and saved successfully',
+    FETCH_SUCCESS: 'Teams retrieved successfully',
+    INSUFFICIENT_PLAYERS:
+      'Not enough joined players to form balanced teams (need an even roster at or above the game minimum)',
+    NOT_FOUND: 'Teams have not been generated for this game yet',
+    HOST_ONLY_GENERATE: 'Only the game host can generate teams',
+  },
+
+  // Module 8 Result Submission & Verification
+  RESULTS: {
+    SUBMITTED_SUCCESS: 'Match result proposal submitted successfully',
+    FETCH_SUCCESS: 'Match result retrieved successfully',
+    VERIFIED_SUCCESS: 'Match result verified and ratings applied successfully',
+    DISPUTED_SUCCESS: 'Match result disputed successfully',
+    NOT_FOUND: 'No result proposal found for this game',
+    NOT_PARTICIPANT: 'Only active joined participants can submit results',
+    NOT_ALLOWED_TO_VERIFY: 'You are not authorized to verify or dispute this result',
+    SAME_TEAM_VERIFY: 'Opposing team players must verify the result',
+    ALREADY_VERIFIED: 'This result has already been verified',
+    ALREADY_SUBMITTED: 'A result proposal has already been submitted for this game',
+    INVALID_SCORES: 'Invalid scores provided in the result proposal',
+  },
+
+  // Module 11 Feedback & Reliability
+  FEEDBACK: {
+    SUBMITTED_SUCCESS: 'Attendance feedback submitted successfully',
+    FETCH_SUCCESS: 'Game feedback retrieved successfully',
+    HOST_ONLY: 'Only the game host can submit attendance feedback',
+    NOT_PARTICIPANT: 'Only game participants can view feedback for this game',
+    GAME_NOT_COMPLETED: 'Feedback can only be submitted after the game is completed',
+    WINDOW_CLOSED: 'The feedback window for this game has closed',
+    ALREADY_SUBMITTED: 'Feedback has already been submitted for this player in this game',
+    INVALID_TARGET: 'Feedback target must be another joined participant of this game',
+  },
+  RELIABILITY: {
+    FETCH_SUCCESS: 'Reliability retrieved successfully',
+    PROFILE_NOT_FOUND: 'Player profile not found',
+    PRIVATE: 'This player has chosen not to share their reliability',
+  },
+
+  // Module 6 AI Matching & Recommendations
+  RECOMMENDATIONS: {
+    FETCH_SUCCESS: 'Game recommendations retrieved successfully',
+  },
 } as const;
